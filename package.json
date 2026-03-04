@@ -1,0 +1,12 @@
+{
+  "name": "hire-dey-go-be",
+  "version": "1.0.0",
+  "description": "A modern job board and recruitment platform connecting **job seekers** with **employers** — inspired by Jobberman, Indeed, and LinkedIn.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

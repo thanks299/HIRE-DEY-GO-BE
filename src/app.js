@@ -1,0 +1,1 @@
+// > **HireDeyGo** — _Find your next opportunity. Hire your next star._
