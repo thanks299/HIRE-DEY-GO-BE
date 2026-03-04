@@ -448,7 +448,7 @@ Skill (Platform-managed skill library)
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/hire-dey-go-be.git
+git clone https://github.com/thanks299/hire-dey-go-be.git
 cd hire-dey-go-be
 
 # Install dependencies

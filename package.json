@@ -3,10 +3,15 @@
   "version": "1.0.0",
   "description": "A modern job board and recruitment platform connecting **job seekers** with **employers** — inspired by Jobberman, Indeed, and LinkedIn.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "mongoose": "^9.2.4"
+  }
 }
