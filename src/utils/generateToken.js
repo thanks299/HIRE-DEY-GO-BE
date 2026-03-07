@@ -6,7 +6,17 @@ export const generateAccessToken = (user) => {
       userId: user._id,
       role: user.role
     },
-    "secret123",
+    process.env.JWT_SECRET,
     { expiresIn: "15m" }
+  );
+};
+
+
+
+export const generateRefreshToken = (user) => {
+  return jwt.sign(
+    { userId: user._id },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "7d" } 
   );
 };

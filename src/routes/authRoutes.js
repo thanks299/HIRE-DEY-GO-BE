@@ -2,12 +2,13 @@
 
 
 import { Router } from 'express';
-import { signup, loginUser, verify } from '../controllers/authControllers.js';
+import { signup, loginUser, verifyEmail, refreshToken } from '../controllers/authControllers.js';
 
 const router = Router();
 
 router.post('/signup', signup);
 router.post('/login', loginUser);
-router.post("/verify-email", verify)
+router.post("/verify-email", verifyEmail)
+router.post("/refresh", refreshToken);
 
 export { router };
