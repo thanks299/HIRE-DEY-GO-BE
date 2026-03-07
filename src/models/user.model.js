@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import isEmail from "validator/lib/isEmail.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -9,7 +10,8 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
+      //match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
+      validate: [isEmail, "Please provide a valid email address"]
     },
     password: {
       type: String,
@@ -57,7 +59,7 @@ const userSchema = new mongoose.Schema(
 );
 
 // ----- Indexes -----
-userSchema.index({ email: 1 });
+//userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 
 // hash password before saving to database
@@ -66,7 +68,7 @@ userSchema.pre("save", async function (next) {
 
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
+  // next();
 });
 
 // ----- Instance method: compare candidate password with stored hash -----
