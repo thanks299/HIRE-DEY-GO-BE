@@ -2,7 +2,7 @@
 
 
 import { Router } from 'express';
-import { signup, loginUser, verifyEmail, refreshToken } from '../controllers/authControllers.js';
+import { signup, loginUser, verifyEmail, refreshToken } from './authControllers.js';
 
 const router = Router();
 

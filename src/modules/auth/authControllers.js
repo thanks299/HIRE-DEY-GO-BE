@@ -1,6 +1,6 @@
-import User from '../models/user.model.js'
+import User from '../../models/user.model.js'
 import bcrypt from "bcrypt";
-import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
+import { generateAccessToken, generateRefreshToken } from "../../utils/generateToken.js";
 import jwt from "jsonwebtoken";
 
 
@@ -15,21 +15,19 @@ const handleErrors = (err) => {
 export const signup = async(req, res) => {
     
     
-    const { email, password,
-             
-        } = req.body;
-    console.log(email, password)
+    const { email, password, name} = req.body;
+    console.log(email, password, name)
 
     try{
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         
         const user = await User.create({ email,
-            password, otp, otpExpires: Date.now() + 10 * 60 * 1000
+            password, name, otp, otpExpires: Date.now() + 10 * 60 * 1000
 
          });
 
-    console.log(`OTP for ${user.email}: ${otp}`); // in real app, send via email
+        console.log(`OTP for ${user.email}: ${otp}`); 
        
 
          res.status(201).json(user);
@@ -162,75 +160,3 @@ export const refreshToken = async (req, res) => {
 
 
 
-
-// export const refreshToken = async (req, res) => {
-//   try {
-//     const { refreshToken } = req.body;
-//     if (!refreshToken) return res.status(400).json({ message: "Refresh token is required" });
-
-//        // DEBUG LOGS
-//     console.log("Refresh secret:", process.env.JWT_REFRESH_SECRET);
-//     console.log("Token received:", refreshToken);
-
-
-//     // Verify token
-//     let payload;
-//     try {
-//       payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-//     } catch (err) {
-//       return res.status(401).json({ message: "Invalid or expired refresh token" });
-//     }
-
-//     // Fetch user
-//     const user = await User.findById(payload.userId);
-//     if (!user) return res.status(404).json({ message: "User not found" });
-
-//     // Generate new tokens
-//     const newAccessToken = generateAccessToken(user);
-//     const newRefreshToken = generateRefreshToken(user);
-
-//     res.json({
-//       accessToken: newAccessToken,
-//       refreshToken: newRefreshToken,
-//       user: {
-//         id: user._id,
-//         email: user.email,
-//         role: user.role,
-//       },
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-
-
-
-
-
-// export const refreshToken = async (req, res) => {
-//   try {
-//     const { refreshToken } = req.body;
-
-//     if (!refreshToken) return res.status(400).json({ message: "Refresh token is required" });
-
-//     const user = await User.findOne({ refreshToken });
-//     if (!user) return res.status(401).json({ message: "Invalid refresh token" });
-
-//     jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-//       if (err) return res.status(403).json({ message: "Invalid or expired refresh token" });
-
-//       const accessToken = jwt.sign(
-//         { userId: user._id, role: user.role },
-//         process.env.JWT_SECRET,
-//         { expiresIn: "15m" }
-//       );
-
-//       res.json({ accessToken });
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: err.message });
-//   }
-// };
