@@ -5,10 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "dev": "nodemon server.js",
     "start": "node src/app.js",
     "test": "node --test ./tests/",
-    "lint": "eslint src/",
-    "dev": "nodemon server.js"
+    "lint": "eslint src/"
   },
   "keywords": [],
   "author": "",
@@ -20,8 +20,8 @@
     "mongoose": "^9.2.4"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.0.3",
-    "nodemon": "^3.1.14"
+    "eslint": "^10.0.3"
   }
 }
