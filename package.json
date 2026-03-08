@@ -20,8 +20,9 @@
     "mongoose": "^9.2.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.0.3"
+    "eslint": "^10.0.3",
+    "eslint-utils": "^3.0.0",
+    "nodemon": "^3.1.14"
   }
 }
