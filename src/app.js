@@ -1,33 +1,52 @@
-// > **HireDeyGo** — _Find your next opportunity. Hire your next star._
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
+import authRoutes from "./modules/auth/auth.routes.js";
+import { errorHandler } from "./middleware/error.middleware.js";
 
-import express from 'express'
-import mongoose from 'mongoose'
+const app = express();
 
-import { router } from "./modules/auth/authRoutes.js"
-import dotenv from "dotenv";
-dotenv.config();
+// Security middleware
+app.use(helmet());
+app.use(cors());
 
+// Logging
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
 
-const app = express()
-
-
-//middleware
+// Body parser
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
+// Health checks
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "HireDeyGo API is running",
+    version: "1.0.0",
+  });
+});
 
-// routes
-app.get('/', (req, res) => {
-    res.send("Hi Group 12 database1")
-}) 
-//app.use(router)
-app.use('/api/v1/auth', router);
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK", message: "Server is running" });
+});
 
+// API Routes
+app.use("/api/v1/auth", authRoutes);
 
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
 
-// database connection
-const dbURI = process.env.MONGO_URI; 
-mongoose.connect(dbURI)
-  .then((result) => app.listen(5000))
-  .catch((err) => console.log(err));
+// Global error handler (must be last)
+app.use(errorHandler);
 
-
+export default app;

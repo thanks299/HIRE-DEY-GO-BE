@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Name is required"],
       trim: true,
       minlength: [2, "Name must be at least 2 characters"],
-      maxlength: [100, "Name cannot exceed 100 characters"],
+      maxlength: [50, "Name must be less than 50 characters"],
     },
     email: {
       type: String,
@@ -70,12 +70,12 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ role: 1 });
 
 // hash password before saving to database
-userSchema.pre("save", async function()  {
-  if (!this.isModified("password")) return ;
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
 
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
-  // next();
+  next();
 });
 
 // ----- Instance method: compare candidate password with stored hash -----
