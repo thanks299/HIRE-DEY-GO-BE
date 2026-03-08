@@ -94,7 +94,7 @@ jobSchema.index({ category: 1 });
 jobSchema.index({ title: "text", description: "text" }); // full-text search
 
 // ----- Validate salaryMax >= salaryMin -----
-jobSchema.pre("validate", function (next) {
+jobSchema.pre("validate", function () {
   if (this.salaryMin != null && this.salaryMax != null) {
     if (this.salaryMax < this.salaryMin) {
       this.invalidate(
