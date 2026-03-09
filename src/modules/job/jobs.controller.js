@@ -1,10 +1,10 @@
-import Job from "../models/job.model.js";
+import Job from "../../models/job.model.js";
 
 export const getJobs = async (req, res, next) => {
   try {
     // --- Pagination ---
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Math.max(1, Number.parseInt(req.query.page) || 1);
+    const limit = Number.parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     // --- Filters ---
@@ -19,11 +19,14 @@ export const getJobs = async (req, res, next) => {
     if (req.query.search) filter.$text = { $search: req.query.search };
 
     // --- Sorting ---
-    const sortOption = req.query.sort === "deadline"
-      ? { deadline: 1 }
-      : req.query.sort === "oldest"
-      ? { createdAt: 1 }
-      : { createdAt: -1 }; // default newest
+    let sortOption;
+    if (req.query.sort === "deadline") {
+      sortOption = { deadline: 1 };
+    } else if (req.query.sort === "oldest") {
+      sortOption = { createdAt: 1 };
+    } else {
+      sortOption = { createdAt: -1 }; // default newest
+    }
 
     // --- Fetch jobs ---
     const jobs = await Job.find(filter)
