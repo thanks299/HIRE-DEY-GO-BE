@@ -1,4 +1,4 @@
-import Job from "../models/job.model.js";
+import Job from "../../models/job.model.js";
 
 export const getJobs = async (req, res, next) => {
   try {
@@ -19,11 +19,14 @@ export const getJobs = async (req, res, next) => {
     if (req.query.search) filter.$text = { $search: req.query.search };
 
     // --- Sorting ---
-    const sortOption = req.query.sort === "deadline"
-      ? { deadline: 1 }
-      : req.query.sort === "oldest"
-      ? { createdAt: 1 }
-      : { createdAt: -1 }; // default newest
+    let sortOption;
+    if (req.query.sort === "deadline") {
+      sortOption = { deadline: 1 };
+    } else if (req.query.sort === "oldest") {
+      sortOption = { createdAt: 1 };
+    } else {
+      sortOption = { createdAt: -1 }; // default newest
+    }
 
     // --- Fetch jobs ---
     const jobs = await Job.find(filter)
@@ -80,8 +83,8 @@ export const createJob = async (req, res, next) => {
     try {
         const newJobPosting = await Job.create({
             ...req.body,
-            companyId: req.body.companyId || new mongoose.Types.ObjectId(),
-            postedBy: req.body.postedBy || new mongoose.Types.ObjectId(),
+            companyId: req.body.companyId,
+            postedBy: req.userId,
             type: req.body.type?.toUpperCase() || "FULL_TIME",
             status: req.body.status?.toUpperCase() || "ACTIVE"
         })
