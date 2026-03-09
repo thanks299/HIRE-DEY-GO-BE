@@ -71,7 +71,7 @@ const sendEmail = async (payload) => {
     }
   } catch (error) {
     console.error("Failed to send email:", error.message);
-    throw new Error("Email delivery failed");
+    throw new Error('Mail sending failed', { cause: error });
   }
 };
 
