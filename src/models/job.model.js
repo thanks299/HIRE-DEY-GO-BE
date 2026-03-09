@@ -2,16 +2,16 @@ import mongoose from "mongoose";
 
 const jobSchema = new mongoose.Schema(
   {
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-      required: true,
-    },
-    postedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    // companyId: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Company",
+    //   required: true,
+    // },
+    // postedBy: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "User",
+    //   required: true,
+    // },
     title: {
       type: String,
       required: [true, "Job title is required"],
@@ -94,7 +94,7 @@ jobSchema.index({ category: 1 });
 jobSchema.index({ title: "text", description: "text" }); // full-text search
 
 // ----- Validate salaryMax >= salaryMin -----
-jobSchema.pre("validate", function (next) {
+jobSchema.pre("validate", function () {
   if (this.salaryMin != null && this.salaryMax != null) {
     if (this.salaryMax < this.salaryMin) {
       this.invalidate(
@@ -103,7 +103,6 @@ jobSchema.pre("validate", function (next) {
       );
     }
   }
-  next();
 });
 
 const Job = mongoose.model("Job", jobSchema);
