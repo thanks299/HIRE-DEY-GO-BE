@@ -20,3 +20,4 @@ app.use("/api/v1", applicationRoutes);
 app.use(errorMiddleware)
 
 export default app
+

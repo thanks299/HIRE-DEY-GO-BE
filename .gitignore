@@ -4,4 +4,5 @@ yarn.lock
 
 # Environment variables
 .env
-.env.development.local
+.env.*.local
+.env.*.example
