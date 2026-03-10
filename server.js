@@ -9,12 +9,11 @@ const startServer = async() => {
 
         app.listen(PORT, () => {
             console.log(`Server running on localhost:${PORT}`);
-        })
+        });
     } catch (error) {
-        console.error(error)
+        console.error("Error starting server:", error);
+        process.exit(1);
     }
-
-
 }
 
 startServer()

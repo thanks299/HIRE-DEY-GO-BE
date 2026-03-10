@@ -1,20 +1,22 @@
-// > **HireDeyGo** — _Find your next opportunity. Hire your next star._
-import express from "express";
+import express from "express"
+import errorMiddleware from "./middlewares/error.middleware.js"
+import authRoute from "./modules/auth/auth.routes.js"
+import jobRoute from "./modules/job/jobs.route.js"
 import profileRoutes from "./modules/profile/profile.routes.js";
 import applicationRoutes from "./modules/applications/application.routes.js";
-import errorMiddleware from "./middlewares/error.middleware.js";
 
-const app = express();
+const app = express()
 
-
-app.use(express.json());
+app.use(express.json())
 
 app.get("/", (req, res) => {
-  res.send("API running...");
-});
+    res.status(200).send("Hello and welcome to hire dey go")
+})
 
-app.use("/api/profile", profileRoutes);
-app.use("/api/applications", applicationRoutes);
+app.use("/api/v1/auth", authRoute);
+app.use("/api/v1", jobRoute);
+app.use("/api/v1", profileRoutes);
+app.use("/api/v1", applicationRoutes);
 app.use(errorMiddleware)
 
-export default app;
+export default app

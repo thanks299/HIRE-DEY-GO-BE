@@ -10,10 +10,10 @@ import { mockAuth } from "../../mockAuth.js";
 
 const router = express.Router();
 
-router.post("/", mockAuth, createApplication);
-router.get("/my", mockAuth, getMyApplications);
-router.get("/:id", mockAuth, getSingleApplication);
-router.put("/:id", mockAuth, updateApplication);
-router.delete("/:id", mockAuth, deleteApplication);
+router.post("/applications", mockAuth, createApplication);
+router.get("/applications", mockAuth, getMyApplications);
+router.get("/applications/:id", mockAuth, getSingleApplication);
+router.put("/applications/:id", mockAuth, updateApplication);
+router.delete("/applications/:id", mockAuth, deleteApplication);
 
 export default router;

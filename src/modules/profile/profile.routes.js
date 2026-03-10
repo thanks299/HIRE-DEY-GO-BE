@@ -7,7 +7,7 @@ import { mockAuth } from "../../middlewares/mockAuth.js";
 
 const router = express.Router();
 
-router.get("/", mockAuth, getMyProfile);
-router.put("/", mockAuth, createOrUpdateProfile);
+router.get("/profile", mockAuth, getMyProfile);
+router.put("/profile", mockAuth, createOrUpdateProfile);
 
 export default router;
