@@ -5,8 +5,8 @@ import {
   getSingleApplication,
   updateApplication,
   deleteApplication,
-} from "../controllers/application.controller.js";
-import { mockAuth } from "../middlewares/mockAuth.js";
+} from "./application.controller.js";
+import { mockAuth } from "../../mockAuth.js";
 
 const router = express.Router();
 

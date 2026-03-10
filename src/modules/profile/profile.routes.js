@@ -2,8 +2,8 @@ import express from "express";
 import {
   getMyProfile,
   createOrUpdateProfile,
-} from "../controllers/profile.controller.js";
-import { mockAuth } from "../middlewares/mockAuth.js";
+} from "./profile.controller.js";
+import { mockAuth } from "../../middlewares/mockAuth.js";
 
 const router = express.Router();
 

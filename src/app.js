@@ -1,7 +1,7 @@
 // > **HireDeyGo** — _Find your next opportunity. Hire your next star._
 import express from "express";
-import profileRoutes from "./routes/profile.routes.js";
-import applicationRoutes from "./routes/application.routes.js";
+import profileRoutes from "./modules/profile/profile.routes.js";
+import applicationRoutes from "./modules/applications/application.routes.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 
 const app = express();
