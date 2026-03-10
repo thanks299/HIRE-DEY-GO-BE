@@ -6,14 +6,14 @@ import {
   updateApplication,
   deleteApplication,
 } from "./application.controller.js";
-import { mockAuth } from "../../mockAuth.js";
+import verifyToken, { authorize } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/applications", mockAuth, createApplication);
-router.get("/applications", mockAuth, getMyApplications);
-router.get("/applications/:id", mockAuth, getSingleApplication);
-router.put("/applications/:id", mockAuth, updateApplication);
-router.delete("/applications/:id", mockAuth, deleteApplication);
+router.post("/applications", verifyToken, authorize("CANDIDATE"), createApplication);
+router.get("/applications", verifyToken, authorize("CANDIDATE"), getMyApplications);
+router.get("/applications/:id", verifyToken, authorize("CANDIDATE"), getSingleApplication);
+router.put("/applications/:id", verifyToken, authorize("CANDIDATE"), updateApplication);
+router.delete("/applications/:id", verifyToken, authorize("CANDIDATE"), deleteApplication);
 
 export default router;

@@ -3,11 +3,11 @@ import {
   getMyProfile,
   createOrUpdateProfile,
 } from "./profile.controller.js";
-import { mockAuth } from "../../middlewares/mockAuth.js";
+import verifyToken, { authorize } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/profile", mockAuth, getMyProfile);
-router.put("/profile", mockAuth, createOrUpdateProfile);
+router.get("/profile", verifyToken, authorize(["CANDIDATE", "RECRUITER"]), getMyProfile);
+router.put("/profile", verifyToken, authorize(["CANDIDATE", "RECRUITER"]), createOrUpdateProfile);
 
 export default router;

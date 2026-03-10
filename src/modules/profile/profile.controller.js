@@ -61,9 +61,9 @@ export const createOrUpdateProfile = async (req, res) => {
         avatarUrl,
       },
       {
-        new: true,
+        returnDocument: 'after',
         upsert: true,
-        runValidators: true,
+        runValidators: true
       }
     );
 
