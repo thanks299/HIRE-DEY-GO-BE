@@ -1,4 +1,3 @@
-
 // > **HireDeyGo** — _Find your next opportunity. Hire your next star._
 import express from "express";
 import profileRoutes from "./routes/profile.routes.js";
@@ -8,7 +7,6 @@ import errorMiddleware from "./middlewares/error.middleware.js";
 
 const app = express();
 
-
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -17,6 +15,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/profile", profileRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/v1/auth", authRoute)
 app.use("/api/v1", jobRoute)
 app.use(errorMiddleware)
 
