@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Application from "../../models/application.model.js";
-import AssessmentResult from "../../models/assessmentResult.model.js";
+import "../../models/assessmentResult.model.js";
 
 export const createApplication = async (req, res) => {
   try {
