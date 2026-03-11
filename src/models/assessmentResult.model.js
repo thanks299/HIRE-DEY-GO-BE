@@ -66,7 +66,7 @@ const assessmentResultSchema = new mongoose.Schema(
     }
 );
 
-assessmentResultSchema.index({ assessmentId: 1, userId: 1, jobId: 1 });
+//assessmentResultSchema.index({ assessmentId: 1, userId: 1, jobId: 1 });
 assessmentResultSchema.index({ userId: 1 });
 assessmentResultSchema.index({ jobId: 1 });
 
@@ -82,9 +82,6 @@ assessmentResultSchema.pre("save", function (next) {
     next();
 });
 
-const AssessmentResult = mongoose.model(
-    "AssessmentResult",
-    assessmentResultSchema
-);
+const AssessmentResult = mongoose.model("AssessmentResult", assessmentResultSchema);
 
 export default AssessmentResult;

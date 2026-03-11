@@ -27,6 +27,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@eslint-community/eslint-utils": "^3.0.1",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.0.3",
     "eslint-utils": "^3.0.0",
