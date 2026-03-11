@@ -6,6 +6,7 @@ import profileRoutes from "./modules/profile/profile.routes.js";
 import applicationRoutes from "./modules/applications/application.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger.js";
+import cors from "cors";
 
 
 const app = express();
