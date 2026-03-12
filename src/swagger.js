@@ -34,6 +34,8 @@ const options = {
     "./src/modules/job/*.js",
     "./src/modules/applications/*.js",
     "./src/modules/profile/*.js",
+    "./src/modules/admin/*.js",
+    "./src/modules/notification/*.routes.js",
     "./src/app.js",
   ],
 };

@@ -7,8 +7,8 @@ import applicationRoutes from "./modules/applications/application.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger.js";
 import cors from "cors";
-
-
+import adminRoutes from "./modules/admin/admin.routes.js";
+import notificationRoutes from "./modules/notification/notification.routes.js";
 const app = express();
 
 // Allowing all origin and allow credentials (like cookies or auth headers) too:
@@ -20,6 +20,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 
 /**
  * @swagger
@@ -41,6 +42,8 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1", jobRoute);
 app.use("/api/v1", profileRoutes);
 app.use("/api/v1", applicationRoutes);
+app.use("/api/v1/", notificationRoutes);
+app.use("/api/v1/", adminRoutes);
 app.use(errorMiddleware);
 
 export default app
