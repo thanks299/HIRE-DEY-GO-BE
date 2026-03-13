@@ -75,11 +75,11 @@ export const getSkillAnalysis = (candidateSkills = [], requiredSkills = []) => {
  * Calculate CV relevance score
  * Based on candidate's experience and education relevance
  * @param {object} profile - Candidate's profile object
- * @param {string[]} requiredSkills - Required skills from job
+ * @param {string[]} _requiredSkills - Required skills from job (not used in calculation)
  * @returns {number} - Score 0-100
  */
-export const calculateCVRelevanceScore = (profile, requiredSkills = []) => {
-  let relevanceScore = 0; // Base score
+export const calculateCVRelevanceScore = (profile, _requiredSkills = []) => {
+  let relevanceScore = 0; 
 
   if (!profile) return relevanceScore;
 
