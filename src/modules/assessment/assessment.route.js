@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { attachAssessmentToJob, createAssessment, getAssessmentResult, startAssessment, submitAssessment } from "./assessment.controller.js";
+import verifyToken, { authorize } from "../../middlewares/auth.middleware.js";
 
 const assessmentRouter = Router();
 
@@ -64,7 +65,7 @@ const assessmentRouter = Router();
  *         description: Assessment created successfully
  */
 
-assessmentRouter.post("/assessments", createAssessment);
+assessmentRouter.post("/assessments", verifyToken, authorize("RECRUITER"), createAssessment);
 
 
 //assessmentRouter.post("/assessments/:id");
@@ -97,12 +98,12 @@ assessmentRouter.post("/assessments", createAssessment);
  *       404:
  *         description: Job not found
  */
-assessmentRouter.post("/jobs/:jobId/assessments/:assessmentId", attachAssessmentToJob);
+assessmentRouter.post("/jobs/:jobId/assessments/:assessmentId", verifyToken, attachAssessmentToJob);
 
 /**
  * @swagger
  * /api/v1/jobs/{jobId}/assessment:
- *   post:
+ *   get:
  *     summary: Start a job assessment
  *     tags: [Assessment]
  *     security:
@@ -122,7 +123,7 @@ assessmentRouter.post("/jobs/:jobId/assessments/:assessmentId", attachAssessment
  *       400:
  *         description: Candidate already took this assessment
  */
-assessmentRouter.post("/jobs/:jobId/assessment", startAssessment);
+assessmentRouter.get("/jobs/:jobId/assessment",verifyToken, startAssessment);
 
 /**
  * @swagger
@@ -172,7 +173,7 @@ assessmentRouter.post("/jobs/:jobId/assessment", startAssessment);
  *       400:
  *         description: Assessment already submitted
  */
-assessmentRouter.post("/assessments/:id/submit", submitAssessment);
+assessmentRouter.post("/assessments/:id/submit", verifyToken, authorize("CANDIDATE"), submitAssessment);
 
 /**
  * @swagger
@@ -195,6 +196,6 @@ assessmentRouter.post("/assessments/:id/submit", submitAssessment);
  *       404:
  *         description: Result not found
  */
-assessmentRouter.post("/assessments/:id/result", getAssessmentResult);
+assessmentRouter.get("/assessments/:id/result", verifyToken, authorize("CANDIDATE"), getAssessmentResult);
 
 export default assessmentRouter

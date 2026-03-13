@@ -38,7 +38,7 @@ export const attachAssessmentToJob = async (req, res, next) => {
         throw error;
     }
 
-    job.assessment = assessmentId;
+    job.assessmentId = assessmentId;
 
     await job.save();
 
