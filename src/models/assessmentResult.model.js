@@ -66,7 +66,8 @@ const assessmentResultSchema = new mongoose.Schema(
     }
 );
 
-assessmentResultSchema.index({ assessmentId: 1, userId: 1, jobId: 1 }, { unique: true });
+assessmentResultSchema.index({ userId: 1 });
+assessmentResultSchema.index({ jobId: 1 });
 
 assessmentResultSchema.pre("save", function () {
     if (this.maxScore > 0) {
@@ -74,9 +75,6 @@ assessmentResultSchema.pre("save", function () {
     }
 });
 
-const AssessmentResult = mongoose.model(
-    "AssessmentResult",
-    assessmentResultSchema
-);
+const AssessmentResult = mongoose.model("AssessmentResult", assessmentResultSchema);
 
 export default AssessmentResult;

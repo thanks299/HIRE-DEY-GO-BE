@@ -83,7 +83,7 @@ const profileSchema = new mongoose.Schema(
 );
 
 // ----- Indexes -----
-profileSchema.index({ userId: 1 });
+//profileSchema.index({ userId: 1 }); <- causing schema index issue has you have already set userId unique to true
 profileSchema.index({ skills: 1 });
 
 const Profile = mongoose.model("Profile", profileSchema);

@@ -1,4 +1,6 @@
 import * as authService from "./auth.service.js";
+import { createNotification } 
+from "../notification/notification.service.js";
 
 /**
  * Register a new user
@@ -16,6 +18,10 @@ export const register = async (req, res) => {
     });
   } catch (error) {
     const status = error.status || 500;
+    await createNotification({
+      type: "NEW_RECRUITER",
+      message: "A new recruiter registered"
+    });
     res.status(status).json({
       success: false,
       message: error.message || "Registration failed",

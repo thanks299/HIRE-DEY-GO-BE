@@ -26,12 +26,16 @@ export const isValidOTP = (otp) => {
 };
 
 /**
- * Validate name (2-100 characters, letters and spaces only)
+ * Validate name part (2-50 characters, letters, spaces, hyphens, apostrophes)
  */
 export const isValidName = (name) => {
-  if (!name || name.length < 2 || name.length > 100) return false;
+  if (!name || name.length < 2 || name.length > 50) return false;
   return /^[a-zA-Z\s'-]+$/.test(name.trim());
 };
+
+export const isValidFirstName = (firstName) => isValidName(firstName);
+
+export const isValidLastName = (lastName) => isValidName(lastName);
 
 /**
  * Validate role
