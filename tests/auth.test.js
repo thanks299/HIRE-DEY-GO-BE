@@ -15,7 +15,8 @@ describe("Auth Endpoints", () => {
   });
 
   const testUser = {
-    name: "Test User",
+    firstName: "Test",
+    lastName: "User",
     email: `test-${Date.now()}@example.com`,
     password: process.env.TEST_PASSWORD || "testPassword123",
     role: "CANDIDATE"
