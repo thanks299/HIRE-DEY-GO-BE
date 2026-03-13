@@ -26,7 +26,8 @@ describe("Scoring Endpoints Integration", () => {
   }
 
     recruiter = await User.create({
-      name: "Recruiter",
+      firstName: "Recruiter",
+      lastName: "User",
       email: `recruiter-score-${suffix}@example.com`,
       password: process.env.TEST_USER_PASSWORD || "TestPassword!@#",
       role: "RECRUITER",
@@ -34,7 +35,8 @@ describe("Scoring Endpoints Integration", () => {
     });
 
     candidate = await User.create({
-      name: "Candidate",
+      firstName: "Candidate",
+      lastName: "User",
       email: `candidate-score-${suffix}@example.com`,
       password: process.env.TEST_USER_PASSWORD || "TestPassword!@#",
       role: "CANDIDATE",
@@ -42,7 +44,8 @@ describe("Scoring Endpoints Integration", () => {
     });
 
     outsider = await User.create({
-      name: "Outsider",
+      firstName: "Outsider",
+      lastName: "User",
       email: `outsider-score-${suffix}@example.com`,
       password: process.env.TEST_USER_PASSWORD || "TestPassword!@#",
       role: "CANDIDATE",

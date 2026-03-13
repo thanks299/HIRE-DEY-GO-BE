@@ -6,7 +6,8 @@ import app from "../../src/app.js";
 import connectDb from "../../src/config/db.js";
 
 const testUser = {
-  name: "Test User",
+  firstName: "Test",
+  lastName: "User",
   email: `test-${Date.now()}@example.com`,
   password: process.env.TEST_PASSWORD || "testPassword123",
   role: "CANDIDATE",
@@ -31,6 +32,7 @@ describe("Auth Endpoints Integration", () => {
     const response = await request(app)
       .post("/api/v1/auth/register")
       .send(testUser);
+
     assert.strictEqual(response.status, 201);
     assert.strictEqual(response.body.success, true);
     assert.ok(response.body.tokens.accessToken);
@@ -41,6 +43,7 @@ describe("Auth Endpoints Integration", () => {
     const response = await request(app)
       .post("/api/v1/auth/login")
       .send({ email: testUser.email, password: testUser.password });
+
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.body.success, true);
     assert.ok(response.body.tokens.accessToken);
@@ -52,7 +55,10 @@ describe("Auth Endpoints Integration", () => {
     const response = await request(app)
       .post("/api/v1/auth/login")
       .send({ email: testUser.email, password: invalidPassword });
+
     assert.strictEqual(response.status, 401);
     assert.strictEqual(response.body.success, false);
   });
 });
+// Ensure process exits after all tests regardless of open handles
+setTimeout(() => process.exit(0), 2000).unref();

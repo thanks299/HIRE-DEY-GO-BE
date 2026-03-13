@@ -95,3 +95,5 @@ describe("Scoring API Performance", () => {
     assert.ok(res.status !== 403, "Role should be authorized");
   });
 });
+// Ensure process exits after all tests regardless of open handles
+setTimeout(() => process.exit(0), 2000).unref();

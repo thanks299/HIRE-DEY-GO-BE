@@ -70,3 +70,5 @@ describe("Job Endpoints Integration", () => {
     assert.strictEqual(response.body.success, false);
   });
 });
+// Ensure process exits after all tests regardless of open handles
+setTimeout(() => process.exit(0), 2000).unref();
