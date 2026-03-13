@@ -48,13 +48,20 @@ export const generateOTP = () => {
 /**
  * Register a new user
  * @param {Object} userData - User registration data
- * @param {string} userData.name - User's name
+ * @param {string} userData.firstName - User's first name
+ * @param {string} userData.lastName - User's last name
  * @param {string} userData.email - User's email
  * @param {string} userData.password - User's password
  * @param {string} userData.role - User's role
  * @returns {Promise<Object>} Registration result with user data and tokens
  */
-export const registerUser = async ({ name, email, password, role }) => {
+export const registerUser = async ({
+  firstName,
+  lastName,
+  email,
+  password,
+  role,
+}) => {
   // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -68,7 +75,8 @@ export const registerUser = async ({ name, email, password, role }) => {
 
   // Create new user
   const newUser = new User({
-    name,
+    firstName,
+    lastName,
     email,
     password,
     role: userRole,

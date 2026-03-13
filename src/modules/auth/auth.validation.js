@@ -9,14 +9,23 @@ import { z } from "zod";
  * Register validation schema
  */
 export const registerSchema = z.object({
-  name: z
-    .string({ required_error: "Name is required" })
-    .min(2, "Name must be at least 2 characters")
-    .max(100, "Name must not exceed 100 characters")
+  firstName: z
+    .string({ required_error: "First name is required" })
+    .min(2, "First name must be at least 2 characters")
+    .max(50, "First name must not exceed 50 characters")
     .trim()
     .regex(
       /^[a-zA-Z\s'-]+$/,
-      "Name must contain only letters, spaces, hyphens, and apostrophes"
+      "First name must contain only letters, spaces, hyphens, and apostrophes"
+    ),
+  lastName: z
+    .string({ required_error: "Last name is required" })
+    .min(2, "Last name must be at least 2 characters")
+    .max(50, "Last name must not exceed 50 characters")
+    .trim()
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      "Last name must contain only letters, spaces, hyphens, and apostrophes"
     ),
   email: z
     .string({ required_error: "Email is required" })
