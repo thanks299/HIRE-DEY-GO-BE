@@ -22,8 +22,11 @@ class ServiceError extends Error {
  * @param {string} userId - User ID
  * @returns {string} JWT access token
  */
-export const generateAccessToken = (userId) => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+export const generateAccessToken = (userId, role) => {
+  return jwt.sign(
+    { userId, role }, JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
 };
 
 /**

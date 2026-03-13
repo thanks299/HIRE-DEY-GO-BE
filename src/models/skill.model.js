@@ -5,7 +5,7 @@ const skillSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "Skill name is required"],
-      unique: true,
+      // unique: true, // handled by schema.index below
       trim: true,
       lowercase: true,
     },
@@ -20,7 +20,7 @@ const skillSchema = new mongoose.Schema(
 );
 
 // ----- Indexes -----
-skillSchema.index({ name: 1 });
+skillSchema.index({ name: 1 }, { unique: true });
 skillSchema.index({ category: 1 });
 
 const Skill = mongoose.model("Skill", skillSchema);

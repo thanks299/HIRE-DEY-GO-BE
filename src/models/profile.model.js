@@ -32,7 +32,7 @@ const profileSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true, // 1:1 relationship — one profile per user
+      // unique: true, // 1:1 relationship — one profile per user
     },
     firstName: {
       type: String,

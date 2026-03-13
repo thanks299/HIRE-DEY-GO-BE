@@ -6,7 +6,7 @@ const companySchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
-            unique: true, // 1:1 — one company per recruiter
+            // unique: true, // 1:1 — one company per recruiter
         },
         name: {
             type: String,
@@ -43,7 +43,7 @@ const companySchema = new mongoose.Schema(
 );
 
 // ----- Indexes -----
-companySchema.index({ userId: 1 });
+companySchema.index({ userId: 1 }, { unique: true });
 companySchema.index({ name: "text" });
 
 const Company = mongoose.model("Company", companySchema);
