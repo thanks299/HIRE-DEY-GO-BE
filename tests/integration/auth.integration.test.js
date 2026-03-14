@@ -2,33 +2,37 @@ import { test, describe, before, after } from "node:test";
 import assert from "node:assert";
 import request from "supertest";
 import mongoose from "mongoose";
-import app from "../src/app.js";
-import { MONGODB_URI } from "../src/config/env.js";
+import app from "../../src/app.js";
+import connectDb from "../../src/config/db.js";
 
-describe("Auth Endpoints", () => {
+const testUser = {
+  firstName: "Test",
+  lastName: "User",
+  email: `test-${Date.now()}@example.com`,
+  password: process.env.TEST_PASSWORD || "testPassword123",
+  role: "CANDIDATE",
+};
+
+const invalidPassword = process.env.INVALID_PASSWORD || "wrongPassword";
+
+describe("Auth Endpoints Integration", () => {
   before(async () => {
-    await mongoose.connect(MONGODB_URI);
+    if (mongoose.connection.readyState === 0) {
+      await connectDb();
+    }
   });
 
   after(async () => {
-    await mongoose.connection.close();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
   });
-
-  const testUser = {
-    firstName: "Test",
-    lastName: "User",
-    email: `test-${Date.now()}@example.com`,
-    password: process.env.TEST_PASSWORD || "testPassword123",
-    role: "CANDIDATE"
-  };
-
-  const invalidPassword = process.env.INVALID_PASSWORD || "wrongPassword";
 
   test("POST /api/v1/auth/register should create a new user", async () => {
     const response = await request(app)
       .post("/api/v1/auth/register")
       .send(testUser);
-    
+
     assert.strictEqual(response.status, 201);
     assert.strictEqual(response.body.success, true);
     assert.ok(response.body.tokens.accessToken);
@@ -38,11 +42,8 @@ describe("Auth Endpoints", () => {
   test("POST /api/v1/auth/login should authenticate user and return tokens", async () => {
     const response = await request(app)
       .post("/api/v1/auth/login")
-      .send({
-        email: testUser.email,
-        password: testUser.password
-      });
-    
+      .send({ email: testUser.email, password: testUser.password });
+
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.body.success, true);
     assert.ok(response.body.tokens.accessToken);
@@ -53,12 +54,11 @@ describe("Auth Endpoints", () => {
   test("POST /api/v1/auth/login should fail with invalid credentials", async () => {
     const response = await request(app)
       .post("/api/v1/auth/login")
-      .send({
-        email: testUser.email,
-        password: invalidPassword
-      });
-    
+      .send({ email: testUser.email, password: invalidPassword });
+
     assert.strictEqual(response.status, 401);
     assert.strictEqual(response.body.success, false);
   });
 });
+// Ensure process exits after all tests regardless of open handles
+setTimeout(() => process.exit(0), 2000).unref();

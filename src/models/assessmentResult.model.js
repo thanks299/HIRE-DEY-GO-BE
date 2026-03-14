@@ -66,20 +66,13 @@ const assessmentResultSchema = new mongoose.Schema(
     }
 );
 
-//assessmentResultSchema.index({ assessmentId: 1, userId: 1, jobId: 1 });
 assessmentResultSchema.index({ userId: 1 });
 assessmentResultSchema.index({ jobId: 1 });
 
-assessmentResultSchema.index(
-    { assessmentId: 1, userId: 1, jobId: 1 },
-    { unique: true }
-);
-
-assessmentResultSchema.pre("save", function (next) {
+assessmentResultSchema.pre("save", function () {
     if (this.maxScore > 0) {
         this.percentage = Math.round((this.score / this.maxScore) * 100);
     }
-    next();
 });
 
 const AssessmentResult = mongoose.model("AssessmentResult", assessmentResultSchema);
