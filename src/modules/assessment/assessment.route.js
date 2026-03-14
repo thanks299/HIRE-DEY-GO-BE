@@ -127,7 +127,7 @@ assessmentRouter.get("/jobs/:jobId/assessment",verifyToken, startAssessment);
 
 /**
  * @swagger
- * /api/v1/assessments/{id}/submit:
+ * /api/v1/assessments/{assessmentId}/submit:
  *   post:
  *     summary: Submit answers for an assessment
  *     tags: [Assessment]
@@ -135,7 +135,7 @@ assessmentRouter.get("/jobs/:jobId/assessment",verifyToken, startAssessment);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: assessmentId
  *         required: true
  *         schema:
  *           type: string
@@ -148,6 +148,7 @@ assessmentRouter.get("/jobs/:jobId/assessment",verifyToken, startAssessment);
  *             type: object
  *             required:
  *               - jobId
+ *               - timeTaken
  *               - answers
  *             properties:
  *               jobId:
@@ -173,7 +174,7 @@ assessmentRouter.get("/jobs/:jobId/assessment",verifyToken, startAssessment);
  *       400:
  *         description: Assessment already submitted
  */
-assessmentRouter.post("/assessments/:id/submit", verifyToken, authorize("CANDIDATE"), submitAssessment);
+assessmentRouter.post("/assessments/:assessmentId/submit", verifyToken, authorize("CANDIDATE"), submitAssessment);
 
 /**
  * @swagger

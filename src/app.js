@@ -41,6 +41,13 @@ app.get("/", (req, res) => {
   res.status(200).send("Hello and welcome to hire dey go");
 });
 
+app.use((req,res,next)=>{
+  console.log("METHOD:",req.method);
+  console.log("URL:",req.originalUrl);
+  console.log("BODY:",req.body);
+  next();
+});
+
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1", jobRoute);
 app.use("/api/v1", profileRoutes);

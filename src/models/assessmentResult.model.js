@@ -79,7 +79,6 @@ assessmentResultSchema.pre("save", function (next) {
     if (this.maxScore > 0) {
         this.percentage = Math.round((this.score / this.maxScore) * 100);
     }
-    next();
 });
 
 const AssessmentResult = mongoose.model("AssessmentResult", assessmentResultSchema);

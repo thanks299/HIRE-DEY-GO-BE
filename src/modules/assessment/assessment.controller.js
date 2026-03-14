@@ -1,7 +1,7 @@
 import Assessment from "../../models/assessment.model.js";
 import AssessmentResult from "../../models/assessmentResult.model.js";
 import Job from "../../models/job.model.js";
-import User from "../../models/user.model.js";
+//import User from "../../models/user.model.js";
 
 export const createAssessment = async (req, res, next) => {
   try {
@@ -56,18 +56,19 @@ export const attachAssessmentToJob = async (req, res, next) => {
 export const startAssessment = async (req, res, next) => {
   try {
 
-    const userId = req.user.id;
+    const userId = req.userId;
+    console.log(userId)
     const { jobId } = req.params;
 
-    const job = await Job.findById(jobId).populate("assessment");
+    const job = await Job.findById(jobId).populate("assessmentId");
 
-    if (!job || !job.assessment) {
+    if (!job || !job.assessmentId) {
         const error = new Error('Assessment not available for this job');
         error.statusCode = 404;
         throw error;
     }
 
-    const assessment = job.assessment;
+    const assessment = job.assessmentId;
 
     // CHECK IF USER ALREADY TOOK TEST
     const existingResult = await AssessmentResult.findOne({
@@ -82,14 +83,14 @@ export const startAssessment = async (req, res, next) => {
         throw error;
     }
 
-    // CHECK SKILL SCORE
-    const user = await User.findById(userId);
+    // // CHECK SKILL SCORE
+    // const user = await User.findById(userId);
 
-    if (user.skillScore < job.minimumSkillScore) {
-      return res.status(403).json({
-        message: "Your skill score does not meet job requirement"
-      });
-    }
+    // if (user.skillScore < job.minimumSkillScore) {
+    //   return res.status(403).json({
+    //     message: "Your skill score does not meet job requirement"
+    //   });
+    // }
 
     res.json({
       success: true,
@@ -113,37 +114,40 @@ export const startAssessment = async (req, res, next) => {
 export const submitAssessment = async (req, res, next) => {
   try {
 
-    const { id } = req.params;
-    const { jobId, answers, timeTaken } = req.body;
+    const { assessmentId } = req.params;
+    const { jobId, timeTaken, answers } = req.body;
 
     const userId = req.user.id;
 
-    const assessment = await Assessment.findById(id);
+    const assessment = await Assessment.findById(assessmentId);
+    
 
     if (!assessment) {
-      return res.status(404).json({ message: "Assessment not found" });
+      const error = new Error('Assessment not found');
+      error.statusCode = 400;
+      throw error;
     }
 
     // Prevent multiple submissions
     const existingResult = await AssessmentResult.findOne({
       userId,
       jobId,
-      assessmentId: id
+      assessmentId: assessmentId
     });
 
     if (existingResult) {
-      return res.status(400).json({
-        message: "Assessment already submitted"
-      });
+      const error = new Error('Assessment already submitted');
+      error.statusCode = 400;
+      throw error;
     }
 
     let score = 0;
 
     assessment.questions.forEach((question) => {
 
-      const userAnswer = answers.find(
-        a => a.questionId.toString() === question._id.toString()
-      );
+      const userAnswer = answers.find(answer => answer.questionId.toString() === question._id.toString());
+
+      console.log(userAnswer)
 
       if (!userAnswer) return;
 
@@ -154,25 +158,59 @@ export const submitAssessment = async (req, res, next) => {
         score += question.points;
       }
 
+      console.log(score)
+
     });
 
-    const result = await AssessmentResult.create({
-      assessmentId: id,
+    console.log({
+      assessmentId: assessmentId,
       userId,
       jobId,
       answers,
       score,
-      maxScore: assessment.totalPoints,
+      maxScore: 80,
       timeTaken
+    })
+    console.log(req.originalUrl);
+
+    const maxScore = 80
+
+    const percentage = (score / assessment.totalPoints) * 100;
+
+    console.log({
+      assessmentId: assessmentId,
+      userId,
+      jobId,
+      answers,
+      score,
+      maxScore: maxScore,
+      timeTaken,
+      percentage: percentage,
+      feedback: (score >= maxScore) ? "passed, prepare for an interview" : "failed, You are not a fit for this role"
+    })
+
+    const result = await AssessmentResult.create({
+      assessmentId: assessmentId,
+      userId,
+      jobId,
+      answers,
+      score,
+      maxScore: maxScore,
+      timeTaken,
+      percentage: percentage,
+      feedback: (score >= maxScore) ? "passed, prepare for an interview" : "failed, You are not a fit for this role"
     });
 
-    res.json({
+    
+
+    res.status(201).json({
       success: true,
+      message: "Assessment successfully submitted",
       data: result
     });
 
   } catch (error) {
-    next()
+    next(error)
   }
 };
 
@@ -180,10 +218,10 @@ export const getAssessmentResult = async (req, res, next) => {
   try {
 
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.userId;
 
     const result = await AssessmentResult.findOne({
-      assessmentId: id,
+      _id: id,
       userId
     });
 
