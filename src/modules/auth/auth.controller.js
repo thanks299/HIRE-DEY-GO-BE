@@ -10,6 +10,12 @@ export const register = async (req, res) => {
     // req.body is already validated and sanitized by validation middleware
     const result = await authService.registerUser(req.body);
 
+    if (result.user.role === "RECRUITER") {
+      await createNotification({
+        type: "NEW_RECRUITER",
+        message: "A new recruiter registered"
+      });
+    }
     res.status(201).json({
       success: true,
       message: "User registered successfully. Please verify your email.",

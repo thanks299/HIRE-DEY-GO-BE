@@ -41,7 +41,7 @@ export const registerSchema = z.object({
     ),
   role: z.enum(["CANDIDATE", "RECRUITER"], {
     errorMap: () => ({ message: "Invalid role. Only CANDIDATE or RECRUITER allowed" }),
-  }).default("CANDIDATE").optional(),
+  }).default("CANDIDATE")
 });
 
 /**

@@ -11,11 +11,13 @@ export const {
   JWT_EXPIRES_IN = "1h",
   JWT_REFRESH_EXPIRES_IN = "7d",
   OTP_EXPIRES_IN = "10m",
-  SMTP_HOST,
-  SMTP_PORT,
-  SMTP_USER,
-  SMTP_PASS,
-  SMTP_FROM = "noreply@hiredeygo.com",
+  // SMTP_HOST,
+  // SMTP_PORT,
+  // SMTP_USER,
+  // SMTP_PASS,
+  // SMTP_FROM = "noreply@hiredeygo.com",
+  RESEND_API_KEY = process.env.RESEND_API_KEY,
+  EMAIL_FROM = process.env.EMAIL_FROM,
   FRONTEND_URL = "http://localhost:3000",
 } = process.env;
 
