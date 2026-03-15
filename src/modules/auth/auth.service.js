@@ -235,10 +235,8 @@ export const verifyUserEmail = async ({ email, otp }) => {
     .digest("hex");
 
   if (user.otp !== hashedOtp) {
-
     user.otpAttempts += 1;
     await user.save();
-
     throw new ServiceError("Invalid OTP", 400);
   }
 
@@ -280,9 +278,7 @@ export const requestPasswordReset = async (email) => {
     .digest("hex");
 
   user.passwordResetToken = hashedResetToken;
-
-  user.passwordResetExpires =
-    new Date(Date.now() + 30 * 60 * 1000);
+  user.passwordResetExpires = new Date(Date.now() + 30 * 60 * 1000);
 
   await user.save();
 
@@ -318,10 +314,8 @@ export const resetUserPassword = async ({
   }
 
   user.password = newPassword;
-
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
-
   user.refreshToken = undefined;
 
   await user.save();

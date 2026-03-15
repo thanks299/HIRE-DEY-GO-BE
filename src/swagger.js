@@ -22,7 +22,6 @@ const options = {
         },
       },
     },
-    // Apply bearerAuth globally to all endpoints
     security: [
       {
         bearerAuth: [],
@@ -37,6 +36,7 @@ const options = {
     "./src/modules/admin/*.js",
     "./src/modules/notification/*.routes.js",
     "./src/modules/scoring/*.js",
+    "./src/modules/assessment/*.js",
     "./src/app.js",
   ],
 };
