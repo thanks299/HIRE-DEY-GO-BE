@@ -146,14 +146,6 @@ export const submitAssessment = async (req, res, next) => {
       throw error;
     }
 
-    // calculate time spent
-    const now = new Date();
-    const timeTaken = (now - result.startedAt) / 1000 / 60; // minutes
-
-    if (timeTaken >= assessment.timeLimit) {
-      console.log("Auto submitting due to timeout");
-    }
-
     let score = 0;
 
     assessment.questions.forEach((question) => {
@@ -172,6 +164,14 @@ export const submitAssessment = async (req, res, next) => {
       }
 
     });
+
+    // calculate time spent
+    const now = new Date();
+    const timeTaken = (now - result.startedAt) / 1000 / 60; // minutes
+
+    if (timeTaken >= assessment.timeLimit) {
+      score = score - 20;
+    }
 
     const percentage = (score / assessment.totalPoints) * 100;
 
