@@ -20,15 +20,11 @@ describe("Job Controller Unit", () => {
   test("getJobs should apply pagination/sorting and return shaped response", async () => {
     const fakeJobs = [{ title: "Backend Engineer" }];
 
-    const findMock = mock.method(Job, "find", () => ({
-      populate: mock.fn(() => ({
-        sort: mock.fn(() => ({
-          skip: mock.fn(() => ({
-            limit: mock.fn(async () => fakeJobs),
-          })),
-        })),
-      })),
-    }));
+    const limitMock = mock.fn(async () => fakeJobs);
+    const skipMock = mock.fn(() => ({ limit: limitMock }));
+    const sortMock = mock.fn(() => ({ skip: skipMock }));
+    const populateMock = mock.fn(() => ({ sort: sortMock }));
+    const findMock = mock.method(Job, "find", () => ({ populate: populateMock }));
 
     const countMock = mock.method(Job, "countDocuments", async () => 11);
 
