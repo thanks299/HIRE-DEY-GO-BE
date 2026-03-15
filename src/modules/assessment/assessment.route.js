@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { attachAssessmentToJob, createAssessment, getAssessmentResult, startAssessment, submitAssessment } from "./assessment.controller.js";
+import { attachAssessmentToJob, createAssessment, deleteAssessment, getAssessmentResult, startAssessment, submitAssessment, updateAssessment } from "./assessment.controller.js";
 import verifyToken, { authorize } from "../../middlewares/auth.middleware.js";
 
 const assessmentRouter = Router();
@@ -67,9 +67,72 @@ const assessmentRouter = Router();
 
 assessmentRouter.post("/assessments", verifyToken, authorize("RECRUITER"), createAssessment);
 
+/**
+ * @swagger
+ * /api/v1/assessments/{id}:
+ *   patch:
+ *     summary: Update an assessment
+ *     tags: [Assessment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 665f987abc456
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: Updated Frontend Test
+ *               description:
+ *                 type: string
+ *                 example: Updated description
+ *               timeLimit:
+ *                 type: number
+ *                 example: 45
+ *               skills:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["React", "Node"]
+ *     responses:
+ *       200:
+ *         description: Assessment updated successfully
+ *       404:
+ *         description: Assessment not found
+ */
+assessmentRouter.patch("/assessments/:id", verifyToken, authorize("RECRUITER"), updateAssessment);
 
-//assessmentRouter.post("/assessments/:id");
-//assessmentRouter.post("/assessments/:id");
+/**
+ * @swagger
+ * /api/v1/assessments/{id}:
+ *   delete:
+ *     summary: Delete an assessment
+ *     tags: [Assessment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 665f987abc456
+ *     responses:
+ *       200:
+ *         description: Assessment deleted successfully
+ *       404:
+ *         description: Assessment not found
+ */
+assessmentRouter.delete("/assessments/:id", verifyToken, authorize("RECRUITER"), deleteAssessment);
 
 /**
  * @swagger
@@ -148,15 +211,11 @@ assessmentRouter.get("/jobs/:jobId/assessment",verifyToken, startAssessment);
  *             type: object
  *             required:
  *               - jobId
- *               - timeTaken
  *               - answers
  *             properties:
  *               jobId:
  *                 type: string
  *                 example: 665f123abc123
- *               timeTaken:
- *                 type: number
- *                 example: 20
  *               answers:
  *                 type: array
  *                 items:
