@@ -4,6 +4,7 @@ import request from "supertest";
 import mongoose from "mongoose";
 import app from "../../src/app.js";
 import connectDb from "../../src/config/db.js";
+import User from "../../src/models/user.model.js";
 
 const testUser = {
   firstName: "Test",
@@ -23,6 +24,8 @@ describe("Auth Endpoints Integration", () => {
   });
 
   after(async () => {
+    // Clean up test user
+    await User.deleteOne({ email: testUser.email });
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
     }
@@ -37,6 +40,12 @@ describe("Auth Endpoints Integration", () => {
     assert.strictEqual(response.body.success, true);
     assert.ok(response.body.tokens.accessToken);
     assert.ok(response.body.tokens.refreshToken);
+
+    // Manually verify the user so login tests can proceed
+    await User.updateOne(
+      { email: testUser.email },
+      { isVerified: true }
+    );
   });
 
   test("POST /api/v1/auth/login should authenticate user and return tokens", async () => {
@@ -60,5 +69,5 @@ describe("Auth Endpoints Integration", () => {
     assert.strictEqual(response.body.success, false);
   });
 });
-// Ensure process exits after all tests regardless of open handles
+
 setTimeout(() => process.exit(0), 2000).unref();
