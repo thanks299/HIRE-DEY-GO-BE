@@ -30,6 +30,10 @@ export const getJobs = async (req, res, next) => {
 
     // --- Fetch jobs ---
     const jobs = await Job.find(filter)
+    .populate({
+        path: "postedBy",
+        select: "name email role"
+    })
       .sort(sortOption)
       .skip(skip)
       .limit(limit);
@@ -106,7 +110,7 @@ export const updateJob = async (req, res, next) => {
         const job = await Job.findById(id);
 
         if(!job) {
-            const error = new Error('Job details not found');
+            const error = new Error('Job posting not found');
             error.statusCode = 404;
             throw error;
         }

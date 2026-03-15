@@ -37,6 +37,7 @@ const options = {
     "./src/modules/admin/*.js",
     "./src/modules/notification/*.routes.js",
     "./src/modules/scoring/*.js",
+    "./src/modules/assessment/*.js",
     "./src/app.js",
   ],
 };

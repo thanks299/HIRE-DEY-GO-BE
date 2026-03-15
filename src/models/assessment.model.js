@@ -83,11 +83,10 @@ const assessmentSchema = new mongoose.Schema(
 assessmentSchema.index({ createdBy: 1 });
 assessmentSchema.index({ skills: 1 });
 
-assessmentSchema.pre("save", function (next) {
+assessmentSchema.pre("save", function () {
     if (this.questions && this.questions.length > 0) {
         this.totalPoints = this.questions.reduce((sum, q) => sum + q.points, 0);
     }
-    next();
 });
 
 const Assessment = mongoose.model("Assessment", assessmentSchema);
