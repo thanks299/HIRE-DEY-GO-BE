@@ -1,29 +1,28 @@
 import express from "express";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
-
 import errorMiddleware from "./middlewares/error.middleware.js"
 import authRoute from "./modules/auth/auth.routes.js";
 import jobRoute from "./modules/job/jobs.route.js";
 import profileRoutes from "./modules/profile/profile.routes.js";
 import applicationRoutes from "./modules/applications/application.routes.js";
-import adminRoutes from "./modules/admin/admin.routes.js";
-import notificationRoutes from "./modules/notification/notification.routes.js";
 import assessmentRouter from "./modules/assessment/assessment.route.js";
 import swaggerSpec from "./swagger.js";
+import scoringRoute from "./modules/scoring/scoring.routes.js";
+import adminRoutes from "./modules/admin/admin.routes.js";
+import notificationRoutes from "./modules/notification/notification.routes.js";
+import rateLimiter from "./middlewares/rateLimiter.middleware.js";
 
 const app = express();
 
-// Allowing all origin and allow credentials (like cookies or auth headers) too:
 app.use(cors({
-  origin: "*", // allow all origins
+  origin: "*",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true,
 }));
-
 app.use(express.json());
+app.use(rateLimiter);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 
 /**
  * @swagger
@@ -52,10 +51,10 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1", jobRoute);
 app.use("/api/v1", profileRoutes);
 app.use("/api/v1", applicationRoutes);
+app.use("/api/v1", scoringRoute);
 app.use("/api/v1/", notificationRoutes);
 app.use("/api/v1/", adminRoutes);
 app.use("/api/v1", assessmentRouter)
 app.use(errorMiddleware);
 
-export default app
-
+export default app;

@@ -36,11 +36,11 @@ const options = {
     "./src/modules/profile/*.js",
     "./src/modules/admin/*.js",
     "./src/modules/notification/*.routes.js",
+    "./src/modules/scoring/*.js",
     "./src/modules/assessment/*.js",
     "./src/app.js",
   ],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
-
 export default swaggerSpec;

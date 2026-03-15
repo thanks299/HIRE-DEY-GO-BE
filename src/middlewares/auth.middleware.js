@@ -2,18 +2,21 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/env.js";
 
 export const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]; // Extract token from "Bearer <token>"
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return res.status(401).json({
       success: false,
       message: "Access token is required. Please login.",
     });
   }
 
+  const token = authHeader.split(" ")[1];
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.userId = decoded.userId;
+    req.user = { _id: decoded.userId, role: decoded.role }; // ← attach role here
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
@@ -22,47 +25,25 @@ export const verifyToken = (req, res, next) => {
         message: "Access token has expired. Please refresh your token.",
       });
     }
-
-    return res.status(401).json({
+    return res.status(403).json({
       success: false,
       message: "Invalid or malformed token",
     });
   }
 };
 
-/**
- * Middleware to check if user has specific role(s)
- * @param {string|string[]} allowedRoles - Role(s) that are allowed
- */
-export const authorize =
-  (allowedRoles) => async (req, res, next) => {
-    try {
-      const User = (await import("../models/user.model.js")).default;
-      const user = await User.findById(req.userId);
+export const authorize = (allowedRoles) => (req, res, next) => {
+  // Role already available from token — no DB call needed
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
+  if (!req.user || !roles.includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: "You do not have permission to access this resource",
+    });
+  }
 
-      const roles = Array.isArray(allowedRoles)
-        ? allowedRoles
-        : [allowedRoles];
-
-      if (!roles.includes(user.role)) {
-        return res.status(403).json({
-          success: false,
-          message: "You do not have permission to access this resource",
-        });
-      }
-
-      req.user = user;
-      next();
-    } catch (error) {
-      next(error);
-    }
-  };
+  next();
+};
 
 export default verifyToken;
