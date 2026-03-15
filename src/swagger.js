@@ -22,7 +22,6 @@ const options = {
         },
       },
     },
-    // Apply bearerAuth globally to all endpoints
     security: [
       {
         bearerAuth: [],

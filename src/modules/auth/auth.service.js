@@ -13,51 +13,36 @@ class ServiceError extends Error {
   constructor(message, status = 500) {
     super(message);
     this.status = status;
-    this.name = 'ServiceError';
+    this.name = "ServiceError";
   }
 }
 
-/**
- * Generate Access Token
- * @param {string} userId - User ID
- * @returns {string} JWT access token
- */
+/* ---------------- TOKEN GENERATION ---------------- */
+
 export const generateAccessToken = (userId, role) => {
   return jwt.sign(
-    { userId, role }, JWT_SECRET,
+    { userId, role },
+    JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
 };
 
-/**
- * Generate Refresh Token
- * @param {string} userId - User ID
- * @returns {string} JWT refresh token
- */
 export const generateRefreshToken = (userId) => {
-  return jwt.sign({ userId }, JWT_REFRESH_SECRET, {
-    expiresIn: JWT_REFRESH_EXPIRES_IN,
-  });
+  return jwt.sign(
+    { userId },
+    JWT_REFRESH_SECRET,
+    { expiresIn: JWT_REFRESH_EXPIRES_IN }
+  );
 };
 
-/**
- * Generate OTP
- * @returns {string} 6-digit OTP
- */
+/* ---------------- OTP GENERATION ---------------- */
+
 export const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return (crypto.randomInt(100000, 999999)).toString();
 };
 
-/**
- * Register a new user
- * @param {Object} userData - User registration data
- * @param {string} userData.firstName - User's first name
- * @param {string} userData.lastName - User's last name
- * @param {string} userData.email - User's email
- * @param {string} userData.password - User's password
- * @param {string} userData.role - User's role
- * @returns {Promise<Object>} Registration result with user data and tokens
- */
+/* ---------------- REGISTER USER ---------------- */
+
 export const registerUser = async ({
   firstName,
   lastName,
@@ -65,36 +50,43 @@ export const registerUser = async ({
   password,
   role,
 }) => {
-  // Check if user already exists
+
   const existingUser = await User.findOne({ email });
+
   if (existingUser) {
     throw new ServiceError("Email already registered", 409);
   }
 
-  // Prevent privilege escalation: Only allow CANDIDATE or RECRUITER roles during registration
-  // ADMIN role can only be assigned manually by existing admins
-  const allowedRoles = ['CANDIDATE', 'RECRUITER'];
-  const userRole = allowedRoles.includes(role) ? role : 'CANDIDATE';
+  const allowedRoles = ["CANDIDATE", "RECRUITER"];
+  const userRole = allowedRoles.includes(role) ? role : "CANDIDATE";
 
-  // Create new user
+  const otp = generateOTP();
+
+  const hashedOtp = crypto
+    .createHash("sha256")
+    .update(otp)
+    .digest("hex");
+
   const newUser = new User({
     firstName,
     lastName,
     email,
     password,
     role: userRole,
-    otp: generateOTP(),
-    otpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+    otp: hashedOtp,
+    otpExpires: new Date(Date.now() + 10 * 60 * 1000),
+    otpAttempts: 0
   });
 
   await newUser.save();
 
-  // Send OTP email
-  await sendOtpEmail(newUser.email, newUser.otp);
+  await sendOtpEmail(newUser.email, otp);
 
-  // Generate tokens
-  const accessToken = generateAccessToken(newUser._id);
+  const accessToken = generateAccessToken(newUser._id, newUser.role);
   const refreshToken = generateRefreshToken(newUser._id);
+
+  newUser.refreshToken = refreshToken;
+  await newUser.save();
 
   return {
     user: {
@@ -110,35 +102,42 @@ export const registerUser = async ({
   };
 };
 
-/**
- * Login user
- * @param {Object} credentials - Login credentials
- * @param {string} credentials.email - User's email
- * @param {string} credentials.password - User's password
- * @returns {Promise<Object>} Login result with user data and tokens
- */
+/* ---------------- LOGIN USER ---------------- */
+
 export const loginUser = async ({ email, password }) => {
-  // Find user and select password field
-  const user = await User.findOne({ email }).select("+password");
+
+  const user = await User.findOne({ email })
+    .select("+password +refreshToken");
 
   if (!user) {
     throw new ServiceError("Invalid email or password", 401);
   }
 
-  // Check if user is banned
   if (user.isBanned) {
-    throw new ServiceError("Your account has been suspended. Please contact support.", 403);
+    throw new ServiceError(
+      "Your account has been suspended. Please contact support.",
+      403
+    );
   }
 
-  // Check password
+  if (!user.isVerified) {
+    throw new ServiceError(
+      "Please verify your email before logging in",
+      403
+    );
+  }
+
   const isPasswordValid = await user.comparePassword(password);
+
   if (!isPasswordValid) {
     throw new ServiceError("Invalid email or password", 401);
   }
 
-  // Generate tokens
-  const accessToken = generateAccessToken(user._id);
+  const accessToken = generateAccessToken(user._id, user.role);
   const refreshToken = generateRefreshToken(user._id);
+
+  user.refreshToken = refreshToken;
+  await user.save();
 
   return {
     user: {
@@ -154,17 +153,16 @@ export const loginUser = async ({ email, password }) => {
   };
 };
 
-/**
- * Refresh access token using refresh token
- * @param {string} token - Refresh token
- * @returns {Promise<Object>} New access and refresh tokens
- */
+/* ---------------- REFRESH TOKEN ---------------- */
+
 export const refreshUserToken = async (token) => {
-  // Verify refresh token
+
   let decoded;
+
   try {
     decoded = jwt.verify(token, JWT_REFRESH_SECRET);
   } catch (error) {
+
     if (error.name === "TokenExpiredError") {
       throw new ServiceError("Refresh token has expired", 401);
     }
@@ -176,20 +174,30 @@ export const refreshUserToken = async (token) => {
     throw new ServiceError("Invalid or expired refresh token", 401);
   }
 
-  // Check if user still exists
-  const user = await User.findById(decoded.userId);
+  const user = await User.findById(decoded.userId)
+    .select("+refreshToken");
+
   if (!user) {
     throw new ServiceError("User not found", 401);
   }
 
-  // Check if user is banned
   if (user.isBanned) {
-    throw new ServiceError("Your account has been suspended. Please contact support.", 403);
+    throw new ServiceError(
+      "Your account has been suspended. Please contact support.",
+      403
+    );
   }
 
-  // Generate new tokens
-  const newAccessToken = generateAccessToken(user._id);
+  if (user.refreshToken !== token) {
+    throw new ServiceError("Invalid refresh token", 401);
+  }
+
+  const newAccessToken = generateAccessToken(user._id, user.role);
   const newRefreshToken = generateRefreshToken(user._id);
+
+  user.refreshToken = newRefreshToken;
+
+  await user.save();
 
   return {
     tokens: {
@@ -199,35 +207,48 @@ export const refreshUserToken = async (token) => {
   };
 };
 
-/**
- * Verify email with OTP
- * @param {Object} verificationData - Verification data
- * @param {string} verificationData.email - User's email
- * @param {string} verificationData.otp - OTP code
- * @returns {Promise<Object>} Verification result with user data
- */
+/* ---------------- VERIFY EMAIL ---------------- */
+
 export const verifyUserEmail = async ({ email, otp }) => {
-  // Find user with OTP
-  const user = await User.findOne({ email }).select("+otp +otpExpires");
+
+  const user = await User.findOne({ email })
+    .select("+otp +otpExpires +otpAttempts");
 
   if (!user) {
     throw new ServiceError("User not found", 404);
   }
 
-  // Check if OTP is valid
-  if (user.otp !== otp) {
+  if (user.isVerified) {
+    throw new ServiceError("Email is already verified", 400);
+  }
+
+  if (user.otpAttempts >= 5) {
+    throw new ServiceError(
+      "Too many verification attempts. Request a new OTP.",
+      429
+    );
+  }
+
+  const hashedOtp = crypto
+    .createHash("sha256")
+    .update(otp)
+    .digest("hex");
+
+  if (user.otp !== hashedOtp) {
+    user.otpAttempts += 1;
+    await user.save();
     throw new ServiceError("Invalid OTP", 400);
   }
 
-  // Check if OTP is expired
   if (user.otpExpires < new Date()) {
     throw new ServiceError("OTP has expired", 400);
   }
 
-  // Mark email as verified
   user.isVerified = true;
   user.otp = undefined;
   user.otpExpires = undefined;
+  user.otpAttempts = 0;
+
   await user.save();
 
   return {
@@ -239,55 +260,46 @@ export const verifyUserEmail = async ({ email, otp }) => {
   };
 };
 
-/**
- * Request password reset
- * @param {string} email - User's email
- * @returns {Promise<void>}
- */
+/* ---------------- REQUEST PASSWORD RESET ---------------- */
+
 export const requestPasswordReset = async (email) => {
-  // Find user
+
   const user = await User.findOne({ email });
 
-  // Return early for security (don't reveal if user exists)
   if (!user) {
     return;
   }
 
-  // Generate reset token
   const resetToken = crypto.randomBytes(32).toString("hex");
+
   const hashedResetToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
 
   user.passwordResetToken = hashedResetToken;
-  user.passwordResetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+  user.passwordResetExpires = new Date(Date.now() + 30 * 60 * 1000);
 
   await user.save();
 
-  // Send password reset email
   await sendPasswordResetEmail(email, resetToken);
 };
 
-/**
- * Reset password with token
- * @param {Object} resetData - Password reset data
- * @param {string} resetData.email - User's email
- * @param {string} resetData.token - Reset token
- * @param {string} resetData.newPassword - New password
- * @returns {Promise<void>}
- */
-export const resetUserPassword = async ({ email, token, newPassword }) => {
-  // Find user
-  const user = await User.findOne({ email }).select(
-    "+passwordResetToken +passwordResetExpires"
-  );
+/* ---------------- RESET PASSWORD ---------------- */
+
+export const resetUserPassword = async ({
+  email,
+  token,
+  newPassword
+}) => {
+
+  const user = await User.findOne({ email })
+    .select("+passwordResetToken +passwordResetExpires");
 
   if (!user) {
     throw new ServiceError("User not found", 404);
   }
 
-  // Verify reset token
   const hashedToken = crypto
     .createHash("sha256")
     .update(token)
@@ -297,14 +309,14 @@ export const resetUserPassword = async ({ email, token, newPassword }) => {
     throw new ServiceError("Invalid reset token", 400);
   }
 
-  // Check if token is expired
   if (user.passwordResetExpires < new Date()) {
     throw new ServiceError("Reset token has expired", 400);
   }
 
-  // Update password
   user.password = newPassword;
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
+  user.refreshToken = undefined;
+
   await user.save();
 };

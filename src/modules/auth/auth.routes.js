@@ -131,7 +131,9 @@ authRouter.post(
  *           schema:
  *             type: object
  *             properties:
- *               verificationCode:
+ *               email:
+ *                 type: string
+ *               otp:
  *                 type: string
  *     responses:
  *       200:
