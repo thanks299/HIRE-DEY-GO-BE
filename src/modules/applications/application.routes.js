@@ -31,19 +31,24 @@ const applicationRoute = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [jobId]
  *             properties:
  *               jobId:
  *                 type: string
- *                 description: ID of the job to apply for
+ *                 example: 64f1a2b3c4d5e6f7a8b9c0d1
  *               coverLetter:
  *                 type: string
+ *                 example: I am excited to apply for this role...
  *               resumeUrl:
  *                 type: string
+ *                 example: https://example.com/resume.pdf
  *     responses:
  *       201:
  *         description: Application created successfully
  *       400:
  *         description: Bad request
+ *       401:
+ *         description: Unauthorized
  *       409:
  *         description: Duplicate application
  */
@@ -65,6 +70,8 @@ applicationRoute.post(
  *     responses:
  *       200:
  *         description: Applications fetched successfully
+ *       401:
+ *         description: Unauthorized
  */
 applicationRoute.get(
   "/applications",
@@ -87,10 +94,13 @@ applicationRoute.get(
  *         required: true
  *         schema:
  *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
  *         description: Application ID
  *     responses:
  *       200:
  *         description: Application fetched successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Application not found
  */
@@ -115,6 +125,7 @@ applicationRoute.get(
  *         required: true
  *         schema:
  *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
  *         description: Application ID
  *     requestBody:
  *       required: true
@@ -125,11 +136,15 @@ applicationRoute.get(
  *             properties:
  *               coverLetter:
  *                 type: string
+ *                 example: Updated cover letter content...
  *               resumeUrl:
  *                 type: string
+ *                 example: https://example.com/updated-resume.pdf
  *     responses:
  *       200:
  *         description: Application updated successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Application not found
  */
@@ -154,10 +169,13 @@ applicationRoute.put(
  *         required: true
  *         schema:
  *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
  *         description: Application ID
  *     responses:
  *       200:
  *         description: Application deleted successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Application not found
  */

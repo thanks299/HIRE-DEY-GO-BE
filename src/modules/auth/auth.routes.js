@@ -40,18 +40,31 @@ const authRouter = express.Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [firstName, lastName, email, password]
  *             properties:
- *               name:
+ *               firstName:
  *                 type: string
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
  *               email:
  *                 type: string
+ *                 example: john@example.com
  *               password:
  *                 type: string
+ *                 example: Password123
+ *               role:
+ *                 type: string
+ *                 enum: [CANDIDATE, RECRUITER]
+ *                 example: CANDIDATE
  *     responses:
  *       201:
  *         description: User registered successfully
  *       400:
  *         description: Invalid input
+ *       409:
+ *         description: Email already registered
  */
 authRouter.post(
   "/register",
@@ -65,23 +78,28 @@ authRouter.post(
  *   post:
  *     tags: [Auth]
  *     summary: Login a user
- *     description: Authenticate user and return token
+ *     description: Authenticate user and return tokens
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [email, password]
  *             properties:
  *               email:
  *                 type: string
+ *                 example: john@example.com
  *               password:
  *                 type: string
+ *                 example: Password123
  *     responses:
  *       200:
  *         description: Login successful
  *       401:
  *         description: Invalid credentials
+ *       403:
+ *         description: Email not verified or account suspended
  */
 authRouter.post(
   "/login",
@@ -102,14 +120,16 @@ authRouter.post(
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [refreshToken]
  *             properties:
  *               refreshToken:
  *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *     responses:
  *       200:
  *         description: Token refreshed successfully
  *       401:
- *         description: Invalid refresh token
+ *         description: Invalid or expired refresh token
  */
 authRouter.post(
   "/refresh",
@@ -123,23 +143,28 @@ authRouter.post(
  *   post:
  *     tags: [Auth]
  *     summary: Verify user email
- *     description: Verify a user’s email using a verification code
+ *     description: Verify a user's email using a 6-digit OTP sent to their email
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [email, otp]
  *             properties:
  *               email:
  *                 type: string
+ *                 example: john@example.com
  *               otp:
  *                 type: string
+ *                 example: "916645"
  *     responses:
  *       200:
  *         description: Email verified successfully
  *       400:
- *         description: Invalid or expired code
+ *         description: Invalid or expired OTP
+ *       429:
+ *         description: Too many verification attempts
  */
 authRouter.post(
   "/verify-email",
@@ -153,21 +178,21 @@ authRouter.post(
  *   post:
  *     tags: [Auth]
  *     summary: Request password reset
- *     description: Sends a password reset email to the user
+ *     description: Sends a password reset link to the user's email
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [email]
  *             properties:
  *               email:
  *                 type: string
+ *                 example: john@example.com
  *     responses:
  *       200:
- *         description: Reset email sent
- *       404:
- *         description: User not found
+ *         description: If an account exists, a reset link has been sent
  */
 authRouter.post(
   "/forgot-password",
@@ -181,18 +206,27 @@ authRouter.post(
  *   post:
  *     tags: [Auth]
  *     summary: Reset user password
- *     description: Resets the user’s password using a token
+ *     description: Resets the user's password using a reset token
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [email, token, newPassword, confirmPassword]
  *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
  *               token:
  *                 type: string
+ *                 example: abc123resettoken
  *               newPassword:
  *                 type: string
+ *                 example: NewPassword123
+ *               confirmPassword:
+ *                 type: string
+ *                 example: NewPassword123
  *     responses:
  *       200:
  *         description: Password reset successfully

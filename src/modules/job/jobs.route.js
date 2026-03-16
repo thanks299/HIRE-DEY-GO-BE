@@ -24,7 +24,32 @@ const jobRoute = Router();
  *   get:
  *     tags: [Jobs]
  *     summary: Get all jobs
- *     description: Returns a list of all jobs
+ *     description: Returns a paginated list of all jobs
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           example: deadline
+ *         description: Sort field
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           example: ACTIVE
+ *         description: Filter by status
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           example: FULL_TIME
+ *         description: Filter by job type
  *     responses:
  *       200:
  *         description: Successful
@@ -37,24 +62,52 @@ jobRoute.get("/jobs", getJobs);
  *   post:
  *     tags: [Jobs]
  *     summary: Create a new job
+ *     description: Recruiter only
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [companyId, title, description, requiredSkills, type]
  *             properties:
+ *               companyId:
+ *                 type: string
+ *                 example: 64f1a2b3c4d5e6f7a8b9c0d1
  *               title:
  *                 type: string
+ *                 example: Backend Engineer
  *               description:
  *                 type: string
+ *                 example: Build and maintain APIs
+ *               requiredSkills:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: [Node.js, MongoDB, Docker]
+ *               type:
+ *                 type: string
+ *                 enum: [FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP]
+ *                 example: FULL_TIME
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, CLOSED]
+ *                 example: ACTIVE
  *               location:
  *                 type: string
+ *                 example: Lagos
  *               salary:
  *                 type: number
+ *                 example: 150000
  *     responses:
  *       201:
  *         description: Job created successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — recruiters only
  */
 jobRoute.post("/jobs", verifyToken, authorize("RECRUITER"), createJob);
 
@@ -70,6 +123,7 @@ jobRoute.post("/jobs", verifyToken, authorize("RECRUITER"), createJob);
  *         required: true
  *         schema:
  *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
  *         description: Job ID
  *     responses:
  *       200:
@@ -85,12 +139,16 @@ jobRoute.get("/jobs/:id", getJob);
  *   patch:
  *     tags: [Jobs]
  *     summary: Update a job
+ *     description: Recruiter only
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
  *         description: Job ID
  *     requestBody:
  *       required: true
@@ -107,9 +165,20 @@ jobRoute.get("/jobs/:id", getJob);
  *                 type: string
  *               salary:
  *                 type: number
+ *               requiredSkills:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, CLOSED]
  *     responses:
  *       200:
  *         description: Job updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — recruiters only
  */
 jobRoute.patch("/jobs/:id", verifyToken, authorize("RECRUITER"), updateJob);
 
@@ -119,16 +188,24 @@ jobRoute.patch("/jobs/:id", verifyToken, authorize("RECRUITER"), updateJob);
  *   delete:
  *     tags: [Jobs]
  *     summary: Delete a job
+ *     description: Recruiter only
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
  *         description: Job ID
  *     responses:
  *       200:
  *         description: Job deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — recruiters only
  */
 jobRoute.delete("/jobs/:id", verifyToken, authorize("RECRUITER"), deleteJob);
 
@@ -138,16 +215,24 @@ jobRoute.delete("/jobs/:id", verifyToken, authorize("RECRUITER"), deleteJob);
  *   patch:
  *     tags: [Jobs]
  *     summary: Close a job posting
+ *     description: Recruiter only
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
  *         description: Job ID
  *     responses:
  *       200:
  *         description: Job closed successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — recruiters only
  */
 jobRoute.patch("/jobs/:id/close", verifyToken, authorize("RECRUITER"), closeJobPosting);
 
