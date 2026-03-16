@@ -9,9 +9,8 @@ const options = {
       description: "API documentation for Hire Dey Go",
     },
     servers: [
-      {
-        url: "http://localhost:5000",
-      },
+      { url: "http://localhost:5000", description: "Local" },
+      { url: "https://hire-dey-go-be.onrender.com", description: "Production" },
     ],
     components: {
       securitySchemes: {
