@@ -15,6 +15,7 @@ const testUser = {
 };
 
 const invalidPassword = process.env.INVALID_PASSWORD || "wrongPassword";
+let accessToken;
 
 describe("Auth Endpoints Integration", () => {
   before(async () => {
@@ -24,7 +25,6 @@ describe("Auth Endpoints Integration", () => {
   });
 
   after(async () => {
-    // Clean up test user
     await User.deleteOne({ email: testUser.email });
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
@@ -41,7 +41,6 @@ describe("Auth Endpoints Integration", () => {
     assert.ok(response.body.tokens.accessToken);
     assert.ok(response.body.tokens.refreshToken);
 
-    // Manually verify the user so login tests can proceed
     await User.updateOne(
       { email: testUser.email },
       { isVerified: true }
@@ -58,12 +57,51 @@ describe("Auth Endpoints Integration", () => {
     assert.ok(response.body.tokens.accessToken);
     assert.ok(response.body.tokens.refreshToken);
     assert.strictEqual(response.body.data.email, testUser.email);
+
+    accessToken = response.body.tokens.accessToken;
   });
 
   test("POST /api/v1/auth/login should fail with invalid credentials", async () => {
     const response = await request(app)
       .post("/api/v1/auth/login")
       .send({ email: testUser.email, password: invalidPassword });
+
+    assert.strictEqual(response.status, 401);
+    assert.strictEqual(response.body.success, false);
+  });
+
+  test("POST /api/v1/auth/resend-otp should fail if email already verified", async () => {
+    const response = await request(app)
+      .post("/api/v1/auth/resend-otp")
+      .send({ email: testUser.email });
+
+    assert.strictEqual(response.status, 400);
+    assert.strictEqual(response.body.success, false);
+    assert.strictEqual(response.body.message, "Email is already verified");
+  });
+
+  test("POST /api/v1/auth/resend-otp should fail for non-existent email", async () => {
+    const response = await request(app)
+      .post("/api/v1/auth/resend-otp")
+      .send({ email: "nonexistent@example.com" });
+
+    assert.strictEqual(response.status, 404);
+    assert.strictEqual(response.body.success, false);
+  });
+
+  test("POST /api/v1/auth/logout should logout successfully", async () => {
+    const response = await request(app)
+      .post("/api/v1/auth/logout")
+      .set("Authorization", `Bearer ${accessToken}`);
+
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(response.body.success, true);
+    assert.strictEqual(response.body.message, "Logged out successfully");
+  });
+
+  test("POST /api/v1/auth/logout should fail without token", async () => {
+    const response = await request(app)
+      .post("/api/v1/auth/logout");
 
     assert.strictEqual(response.status, 401);
     assert.strictEqual(response.body.success, false);

@@ -282,3 +282,27 @@ export const validateResetPassword = (data) => {
     throw error;
   }
 };
+
+export const resendOtpSchema = z.object({
+  email: z
+    .string({ required_error: "Email is required" })
+    .toLowerCase()
+    .trim()
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please provide a valid email address"),
+});
+
+export const validateResendOtp = (data) => {
+  try {
+    const sanitized = resendOtpSchema.parse(data);
+    return { isValid: true, errors: [], sanitized };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errors = error.issues.map((err) => ({
+        field: err.path.join("."),
+        message: err.message,
+      }));
+      return { isValid: false, errors, sanitized: null };
+    }
+    throw error;
+  }
+};

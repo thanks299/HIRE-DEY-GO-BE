@@ -320,3 +320,46 @@ export const resetUserPassword = async ({
 
   await user.save();
 };
+
+/* ---------------- LOGOUT USER ---------------- */
+
+export const logoutUser = async (userId) => {
+  const user = await User.findById(userId).select("+refreshToken");
+
+  if (!user) {
+    throw new ServiceError("User not found", 404);
+  }
+
+  user.refreshToken = undefined;
+  await user.save();
+};
+
+/* ---------------- RESEND OTP ---------------- */
+
+export const resendOtp = async (email) => {
+  const user = await User.findOne({ email })
+    .select("+otp +otpExpires +otpAttempts");
+
+  if (!user) {
+    throw new ServiceError("User not found", 404);
+  }
+
+  if (user.isVerified) {
+    throw new ServiceError("Email is already verified", 400);
+  }
+
+  const otp = generateOTP();
+
+  const hashedOtp = crypto
+    .createHash("sha256")
+    .update(otp)
+    .digest("hex");
+
+  user.otp = hashedOtp;
+  user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+  user.otpAttempts = 0;
+
+  await user.save();
+
+  await sendOtpEmail(email, otp);
+};
