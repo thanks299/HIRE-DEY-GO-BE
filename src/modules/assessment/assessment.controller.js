@@ -8,7 +8,7 @@ export const createAssessment = async (req, res, next) => {
     const { title, description, skills, questions, timeLimit } = req.body;
 
     const assessment = await Assessment.create({
-      createdBy: req.user.id,
+      createdBy: req.userId,
       title,
       description,
       skills,
@@ -56,7 +56,7 @@ export const attachAssessmentToJob = async (req, res, next) => {
 export const startAssessment = async (req, res, next) => {
   try {
 
-    const userId = req.user.id;
+    const userId = req.userId;
     const { jobId } = req.params;
 
     const job = await Job.findById(jobId).populate("assessmentId");
