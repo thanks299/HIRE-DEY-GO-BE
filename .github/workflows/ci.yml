@@ -44,4 +44,6 @@ jobs:
         env:
           MONGODB_URI: mongodb://localhost:27017/hire-dey-go-test
           NODE_ENV: test
+          JWT_SECRET: test-secret-key
+          JWT_REFRESH_SECRET: test-refresh-secret-key
         run: npm test

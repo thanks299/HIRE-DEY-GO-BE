@@ -2,8 +2,10 @@ import express from "express";
 import {
   getNotifications,
   markAsRead,
+  deleteNotification,
+  markAllAsRead,
 } from "./notification.controller.js";
-
+import verifyToken from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -12,14 +14,14 @@ const router = express.Router();
  * tags:
  *   name: Notifications
  *   description: Notification management endpoints
- * 
- * 
- * 
+ */
+
+/**
  * @swagger
  * /api/v1/notifications:
  *   get:
  *     summary: Get latest notifications
- *     description: Returns the last 20 notifications for the logged-in admin
+ *     description: Returns the last 20 notifications
  *     tags:
  *       - Notifications
  *     security:
@@ -53,7 +55,23 @@ const router = express.Router();
  *                         type: string
  *                         format: date-time
  */
-router.get("/",getNotifications);
+router.get("/", verifyToken, getNotifications);
+
+/**
+ * @swagger
+ * /api/v1/notifications/read-all:
+ *   patch:
+ *     summary: Mark all notifications as read
+ *     description: Marks all unread notifications as read
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All notifications marked as read
+ */
+router.patch("/read-all", verifyToken, markAllAsRead);
 
 /**
  * @swagger
@@ -72,6 +90,7 @@ router.get("/",getNotifications);
  *         description: ID of the notification
  *         schema:
  *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
  *     responses:
  *       200:
  *         description: Notification marked as read successfully
@@ -90,6 +109,32 @@ router.get("/",getNotifications);
  *                     isRead:
  *                       type: boolean
  */
-router.patch("/:id/read", markAsRead);
+router.patch("/:id/read", verifyToken, markAsRead);
+
+/**
+ * @swagger
+ * /api/v1/notifications/{id}:
+ *   delete:
+ *     summary: Delete a notification
+ *     description: Deletes a single notification by ID
+ *     tags:
+ *       - Notifications
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the notification
+ *         schema:
+ *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
+ *     responses:
+ *       200:
+ *         description: Notification deleted successfully
+ *       404:
+ *         description: Notification not found
+ */
+router.delete("/:id", verifyToken, deleteNotification);
 
 export default router;

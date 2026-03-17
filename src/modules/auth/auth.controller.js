@@ -1,21 +1,32 @@
 import * as authService from "./auth.service.js";
-import { createNotification } 
-from "../notification/notification.service.js";
+import { createNotification } from "../notification/notification.service.js";
+import { NotificationTypes, createNotificationMessage } from "../notification/notification.templates.js";
 
 /**
  * Register a new user
  */
 export const register = async (req, res) => {
   try {
-    // req.body is already validated and sanitized by validation middleware
     const result = await authService.registerUser(req.body);
 
     if (result.user.role === "RECRUITER") {
       await createNotification({
-        type: "NEW_RECRUITER",
-        message: "A new recruiter registered"
+        type: NotificationTypes.NEW_RECRUITER,
+        message: createNotificationMessage(NotificationTypes.NEW_RECRUITER, {
+          email: result.user.email,
+        }),
       });
     }
+
+    if (result.user.role === "CANDIDATE") {
+      await createNotification({
+        type: NotificationTypes.NEW_CANDIDATE,
+        message: createNotificationMessage(NotificationTypes.NEW_CANDIDATE, {
+          email: result.user.email,
+        }),
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: "User registered successfully. Please verify your email.",
@@ -24,10 +35,6 @@ export const register = async (req, res) => {
     });
   } catch (error) {
     const status = error.status || 500;
-    await createNotification({
-      type: "NEW_RECRUITER",
-      message: "A new recruiter registered"
-    });
     res.status(status).json({
       success: false,
       message: error.message || "Registration failed",
@@ -40,7 +47,6 @@ export const register = async (req, res) => {
  */
 export const login = async (req, res) => {
   try {
-    // req.body is already validated and sanitized by validation middleware
     const result = await authService.loginUser(req.body);
 
     res.status(200).json({
@@ -63,7 +69,6 @@ export const login = async (req, res) => {
  */
 export const refreshToken = async (req, res) => {
   try {
-    // req.body is already validated and sanitized by validation middleware
     const { refreshToken: token } = req.body;
     const result = await authService.refreshUserToken(token);
 
@@ -86,7 +91,6 @@ export const refreshToken = async (req, res) => {
  */
 export const verifyEmail = async (req, res) => {
   try {
-    // req.body is already validated and sanitized by validation middleware
     const result = await authService.verifyUserEmail(req.body);
 
     res.status(200).json({
@@ -115,7 +119,6 @@ export const forgotPassword = async (req, res) => {
       message: "If an account exists with this email, a reset link has been sent",
     });
   } catch (error) {
-    // Log error for debugging but return generic message for security
     console.error("Forgot password error:", error);
     res.status(200).json({
       success: true,
@@ -129,7 +132,6 @@ export const forgotPassword = async (req, res) => {
  */
 export const resetPassword = async (req, res) => {
   try {
-    // req.body is already validated and sanitized by validation middleware
     await authService.resetUserPassword(req.body);
 
     res.status(200).json({
@@ -141,6 +143,47 @@ export const resetPassword = async (req, res) => {
     res.status(status).json({
       success: false,
       message: error.message || "Password reset failed",
+    });
+  }
+};
+
+/**
+ * Logout user
+ */
+export const logout = async (req, res) => {
+  try {
+    await authService.logoutUser(req.user._id);
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({
+      success: false,
+      message: error.message || "Logout failed",
+    });
+  }
+};
+
+/**
+ * Resend OTP
+ */
+export const resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    await authService.resendOtp(email);
+
+    res.status(200).json({
+      success: true,
+      message: "OTP resent successfully. Please check your email.",
+    });
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({
+      success: false,
+      message: error.message || "Failed to resend OTP",
     });
   }
 };

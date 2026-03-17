@@ -6,6 +6,7 @@ import {
   getJob,
   getJobs,
   updateJob,
+  getMyJobs,
 } from "./jobs.controller.js";
 import verifyToken, { authorize } from "../../middlewares/auth.middleware.js";
 
@@ -110,6 +111,51 @@ jobRoute.get("/jobs", getJobs);
  *         description: Forbidden — recruiters only
  */
 jobRoute.post("/jobs", verifyToken, authorize("RECRUITER"), createJob);
+
+
+/**
+ * @swagger
+ * /api/v1/jobs/my-jobs:
+ *   get:
+ *     tags: [Jobs]
+ *     summary: Get my posted jobs
+ *     description: Recruiter only — returns all jobs posted by the logged-in recruiter
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           example: ACTIVE
+ *         description: Filter by status
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           example: FULL_TIME
+ *         description: Filter by job type
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           example: newest
+ *         description: Sort by newest, oldest or deadline
+ *     responses:
+ *       200:
+ *         description: Jobs fetched successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — recruiters only
+ */
+jobRoute.get("/jobs/my-jobs", verifyToken, authorize("RECRUITER"), getMyJobs);
 
 /**
  * @swagger

@@ -1,5 +1,6 @@
 import express from "express";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+import verifyToken from "../../middlewares/auth.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import {
   validateRegister,
@@ -8,6 +9,7 @@ import {
   validateVerifyEmail,
   validateForgotPassword,
   validateResetPassword,
+  validateResendOtp,
 } from "./auth.validation.js";
 import {
   register,
@@ -16,6 +18,8 @@ import {
   verifyEmail,
   forgotPassword,
   resetPassword,
+  logout,
+  resendOtp,
 } from "./auth.controller.js";
 
 const authRouter = express.Router();
@@ -237,6 +241,59 @@ authRouter.post(
   "/reset-password",
   validate(validateResetPassword),
   asyncHandler(resetPassword)
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Logout user
+ *     description: Invalidates the user's refresh token
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       401:
+ *         description: Unauthorized
+ */
+authRouter.post(
+  "/logout",
+  verifyToken,
+  asyncHandler(logout)
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-otp:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Resend OTP
+ *     description: Resends a new OTP to the user's email for verification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *     responses:
+ *       200:
+ *         description: OTP resent successfully
+ *       400:
+ *         description: Email already verified
+ *       404:
+ *         description: User not found
+ */
+authRouter.post(
+  "/resend-otp",
+  validate(validateResendOtp),
+  asyncHandler(resendOtp)
 );
 
 export default authRouter;

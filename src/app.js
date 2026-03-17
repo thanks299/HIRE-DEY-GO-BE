@@ -52,7 +52,7 @@ app.use("/api/v1", jobRoute);
 app.use("/api/v1", profileRoutes);
 app.use("/api/v1", applicationRoutes);
 app.use("/api/v1", scoringRoute);
-app.use("/api/v1/", notificationRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/", adminRoutes);
 app.use("/api/v1", assessmentRouter);
 app.use(errorMiddleware);

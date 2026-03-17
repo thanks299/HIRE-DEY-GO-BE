@@ -5,6 +5,8 @@ import {
   getSingleApplication,
   updateApplication,
   deleteApplication,
+  updateApplicationStatus,
+  getJobApplications,
 } from "./application.controller.js";
 import verifyToken, { authorize } from "../../middlewares/auth.middleware.js";
 
@@ -78,6 +80,53 @@ applicationRoute.get(
   verifyToken,
   authorize("CANDIDATE"),
   getMyApplications
+);
+
+/**
+ * @swagger
+ * /api/v1/applications/job/{jobId}:
+ *   get:
+ *     tags: [Applications]
+ *     summary: Get all applications for a job
+ *     description: Recruiter only — returns all applications for a specific job
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: jobId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
+ *         description: Job ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [APPLIED, ASSESSED, SHORTLISTED, INTERVIEW, HIRED, REJECTED]
+ *           example: SHORTLISTED
+ *         description: Filter by status
+ *     responses:
+ *       200:
+ *         description: Applications fetched successfully
+ *       400:
+ *         description: Invalid jobId
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — recruiters only
+ */
+applicationRoute.get(
+  "/applications/job/:jobId",
+  verifyToken,
+  authorize("RECRUITER"),
+  getJobApplications
 );
 
 /**
@@ -184,6 +233,61 @@ applicationRoute.delete(
   verifyToken,
   authorize("CANDIDATE"),
   deleteApplication
+);
+
+/**
+ * @swagger
+ * /api/v1/applications/{id}/status:
+ *   patch:
+ *     tags: [Applications]
+ *     summary: Update application status
+ *     description: Recruiter only — update the status of an application
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: 64f1a2b3c4d5e6f7a8b9c0d1
+ *         description: Application ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [APPLIED, ASSESSED, SHORTLISTED, INTERVIEW, HIRED, REJECTED]
+ *                 example: SHORTLISTED
+ *               interviewDate:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2026-04-01T10:00:00.000Z"
+ *               interviewNotes:
+ *                 type: string
+ *                 example: Strong candidate, good communication skills
+ *     responses:
+ *       200:
+ *         description: Application status updated successfully
+ *       400:
+ *         description: Invalid status or application id
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — recruiters only
+ *       404:
+ *         description: Application not found
+ */
+applicationRoute.patch(
+  "/applications/:id/status",
+  verifyToken,
+  authorize("RECRUITER"),
+  updateApplicationStatus
 );
 
 export default applicationRoute;
