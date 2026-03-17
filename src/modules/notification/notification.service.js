@@ -22,7 +22,7 @@ export const markAsRead = async (id) => {
   return await Notification.findByIdAndUpdate(
     id,
     { isRead: true },
-    { new: true }
+    { returnDocument: 'after' }
   );
 };
 
@@ -31,9 +31,11 @@ export const deleteNotification = async (id) => {
 };
 
 export const markAllAsRead = async (userId = null) => {
-  const filter = userId
-    ? { isRead: false, $or: [{ userId }, { userId: null }] }
-    : { isRead: false };
+  const filter = { isRead: false };
+  
+  if (userId) {
+    filter.$or = [{ userId }, { userId: null }];
+  }
 
   return await Notification.updateMany(filter, { isRead: true });
 };

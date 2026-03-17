@@ -5,34 +5,23 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import app from "../../src/app.js";
 import connectDb from "../../src/config/db.js";
-import { JWT_SECRET } from "../../src/config/env.js";
-import User from "../../src/models/user.model.js";
 import Notification from "../../src/models/notification.js";
+
+const JWT_SECRET = process.env.JWT_SECRET || "test-secret-key";
+
+const adminToken = jwt.sign(
+  { userId: "000000000000000000000001", role: "ADMIN" },
+  JWT_SECRET,
+  { expiresIn: "1h" }
+);
 
 describe("Notification Endpoints Integration", () => {
   let notification;
-  let adminToken;
-  let admin;
 
   before(async () => {
     if (mongoose.connection.readyState === 0) {
       await connectDb();
     }
-
-    admin = await User.create({
-      firstName: "Admin",
-      lastName: "User",
-      email: `admin-notif-${Date.now()}@example.com`,
-      password: process.env.TEST_PASSWORD || "TestPassword123",
-      role: "ADMIN",
-      isVerified: true,
-    });
-
-    adminToken = jwt.sign(
-      { userId: admin._id, role: "ADMIN" },
-      JWT_SECRET,
-      { expiresIn: "1h" }
-    );
 
     notification = await Notification.create({
       type: "NEW_RECRUITER",
@@ -43,7 +32,6 @@ describe("Notification Endpoints Integration", () => {
 
   after(async () => {
     await Notification.deleteMany({ message: "Test notification" });
-    await User.deleteOne({ _id: admin._id });
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
     }
