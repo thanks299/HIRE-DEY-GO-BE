@@ -12,6 +12,9 @@ import scoringRoute from "./modules/scoring/scoring.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import notificationRoutes from "./modules/notification/notification.routes.js";
 import rateLimiter from "./middlewares/rateLimiter.middleware.js";
+import companyRoutes from "./modules/company/company.routes.js";
+import bookmarkRoutes from "./modules/bookmarks/bookmark.routes.js";
+import cvRoutes from "./modules/cv/cv.routes.js";
 
 const app = express();
 
@@ -55,6 +58,9 @@ app.use("/api/v1", scoringRoute);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/", adminRoutes);
 app.use("/api/v1", assessmentRouter);
+app.use("/api/v1/companies", companyRoutes);
+app.use("/api/v1/bookmarks", bookmarkRoutes);
+app.use("/api/v1/cv", cvRoutes);
 app.use(errorMiddleware);
 
 export default app;

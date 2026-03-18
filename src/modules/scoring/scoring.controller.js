@@ -2,9 +2,9 @@
  * Scoring Controller
  * Handles HTTP requests for job-fit scoring and candidate ranking
  */
-
+ 
 import { getRankedCandidatesForJob, getJobFitScoreBreakdown } from "./scoring.service.js";
-
+ 
 /**
  * GET /api/v1/jobs/:jobId/rankings
  * Get ranked candidates for a specific job
@@ -12,24 +12,22 @@ import { getRankedCandidatesForJob, getJobFitScoreBreakdown } from "./scoring.se
  */
 export const getRankings = async (req, res) => {
   const { jobId } = req.params;
-
+ 
   if (!jobId) {
     const error = new Error("Job ID is required");
     error.status = 400;
     throw error;
   }
-
-  const rankedCandidates = await Promise.resolve(
-    getRankedCandidatesForJob(jobId, req.user)
-  );
-
+ 
+  const result = await getRankedCandidatesForJob(jobId, req.user);
+ 
   res.status(200).json({
     success: true,
-    message: `Retrieved ${rankedCandidates.candidates.length} ranked candidates`,
-    data: rankedCandidates,
+    message: `${result.totalRanked} candidate(s) ranked, ${result.totalExcluded} excluded`,
+    data: result,
   });
 };
-
+ 
 /**
  * GET /api/v1/applications/:applicationId/score
  * Get detailed job-fit score breakdown for a specific application
@@ -37,17 +35,15 @@ export const getRankings = async (req, res) => {
  */
 export const getJobFitScore = async (req, res) => {
   const { applicationId } = req.params;
-
+ 
   if (!applicationId) {
     const error = new Error("Application ID is required");
     error.status = 400;
     throw error;
   }
-
-  const scoreBreakdown = await Promise.resolve(
-    getJobFitScoreBreakdown(applicationId, req.user)
-  );
-
+ 
+  const scoreBreakdown = await getJobFitScoreBreakdown(applicationId, req.user);
+ 
   res.status(200).json({
     success: true,
     message: "Job-fit score retrieved successfully",

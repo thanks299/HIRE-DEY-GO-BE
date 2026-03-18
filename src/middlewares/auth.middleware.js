@@ -15,7 +15,7 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.userId = decoded.userId;
+    req.user = { _id: decoded.userId, userId: decoded.userId, role: decoded.role };
     req.user = { _id: decoded.userId, role: decoded.role }; // ← attach role here
     next();
   } catch (error) {
