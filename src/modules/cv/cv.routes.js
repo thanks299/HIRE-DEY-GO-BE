@@ -21,6 +21,16 @@ const upload = multer({
   },
 });
  
+// Wrapper to catch multer errors and return 400 instead of 500
+const handleUpload = (req, res, next) => {
+  upload.single("cv")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    next();
+  });
+};
+ 
 // All CV routes require CANDIDATE role
 router.use(authenticate, authorize("CANDIDATE"));
  
@@ -55,7 +65,7 @@ router.use(authenticate, authorize("CANDIDATE"));
  *       400:
  *         description: No file uploaded or invalid file type
  */
-router.post("/upload", upload.single("cv"), cvController.uploadCV);
+router.post("/upload", handleUpload, cvController.uploadCV);
  
 /**
  * @swagger
@@ -82,7 +92,7 @@ router.post("/upload", upload.single("cv"), cvController.uploadCV);
  *       422:
  *         description: Could not extract text from CV
  */
-router.post("/parse", upload.single("cv"), cvController.parseCV);
+router.post("/parse", handleUpload, cvController.parseCV);
  
 /**
  * @swagger

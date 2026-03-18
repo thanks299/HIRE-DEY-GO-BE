@@ -15,8 +15,12 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = { _id: decoded.userId, userId: decoded.userId, role: decoded.role };
-    req.user = { _id: decoded.userId, role: decoded.role }; // ← attach role here
+    req.user = decoded.userId;
+        req.user = {
+      _id: decoded.userId,
+      userId: decoded.userId, // ← ensures req.user.userId works everywhere
+      role: decoded.role,
+    };
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {

@@ -238,7 +238,7 @@ describe("CV Endpoints Integration", () => {
           ],
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: "after" }
     );
  
     const response = await request(app)
