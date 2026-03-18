@@ -2,9 +2,9 @@ import express from "express";
 import { getRankings, getJobFitScore } from "./scoring.controller.js";
 import { verifyToken, authorize } from "../../middlewares/auth.middleware.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
-
+ 
 const scoringRouter = express.Router();
-
+ 
 /**
  * @swagger
  * /api/v1/jobs/{jobId}/rankings:
@@ -12,7 +12,7 @@ const scoringRouter = express.Router();
  *     tags:
  *       - Scoring
  *     summary: Get ranked candidates for a job
- *     description: Returns a ranked list of candidates who applied for a specific job. Accessible by recruiters only.
+ *     description: Returns candidates who submitted the assessment on time, ranked by highest score. Tie-breaker is earliest submission. Candidates who missed the deadline are excluded and marked REJECTED.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -33,26 +33,71 @@ const scoringRouter = express.Router();
  *                 success:
  *                   type: boolean
  *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "3 candidate(s) ranked, 1 excluded"
  *                 data:
  *                   type: object
  *                   properties:
  *                     jobId:
  *                       type: string
+ *                     title:
+ *                       type: string
  *                     totalApplications:
  *                       type: integer
- *                     candidates:
+ *                     totalRanked:
+ *                       type: integer
+ *                     totalExcluded:
+ *                       type: integer
+ *                     ranked:
  *                       type: array
  *                       items:
  *                         type: object
  *                         properties:
  *                           rank:
  *                             type: integer
+ *                             example: 1
  *                           applicationId:
  *                             type: string
- *                           candidateId:
+ *                           userId:
  *                             type: string
- *                           jobFitScore:
+ *                           email:
+ *                             type: string
+ *                           assessmentScore:
  *                             type: number
+ *                             example: 85
+ *                           rawScore:
+ *                             type: number
+ *                           maxScore:
+ *                             type: number
+ *                           completedAt:
+ *                             type: string
+ *                             format: date-time
+ *                           timeTaken:
+ *                             type: number
+ *                           status:
+ *                             type: string
+ *                             example: ASSESSED
+ *                     excluded:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           applicationId:
+ *                             type: string
+ *                           userId:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                           status:
+ *                             type: string
+ *                             example: REJECTED
+ *                           reason:
+ *                             type: string
+ *                             enum: [no_submission, late_submission]
+ *                           feedback:
+ *                             type: string
+ *                             example: "Your assessment was submitted after the 30-minute time limit elapsed. You have not been moved to the next stage."
  *       401:
  *         description: Unauthorized — missing or invalid token
  *       403:
@@ -66,15 +111,15 @@ scoringRouter.get(
   authorize("RECRUITER"),
   asyncHandler(getRankings)
 );
-
+ 
 /**
  * @swagger
  * /api/v1/applications/{applicationId}/score:
  *   get:
  *     tags:
  *       - Scoring
- *     summary: Get job-fit score breakdown for an application
- *     description: Returns a detailed job-fit score breakdown for a specific application. Candidates can only view their own score.
+ *     summary: Get score breakdown for an application
+ *     description: Returns the assessment score and submission details for a specific application. Candidates can only view their own score. Includes feedback if the candidate was excluded due to late or missing submission.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -86,7 +131,7 @@ scoringRouter.get(
  *         description: The MongoDB ObjectId of the application
  *     responses:
  *       200:
- *         description: Score breakdown returned successfully
+ *         description: Score returned successfully
  *         content:
  *           application/json:
  *             schema:
@@ -100,18 +145,44 @@ scoringRouter.get(
  *                   properties:
  *                     applicationId:
  *                       type: string
- *                     jobFitScore:
- *                       type: number
- *                       example: 78.5
- *                     breakdown:
+ *                     jobId:
+ *                       type: string
+ *                     jobTitle:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                       example: ASSESSED
+ *                     appliedAt:
+ *                       type: string
+ *                       format: date-time
+ *                     rank:
+ *                       type: integer
+ *                       nullable: true
+ *                       example: 1
+ *                     hasSubmitted:
+ *                       type: boolean
+ *                     assessment:
+ *                       nullable: true
  *                       type: object
  *                       properties:
- *                         skillsScore:
+ *                         score:
  *                           type: number
- *                         experienceScore:
+ *                         maxScore:
  *                           type: number
- *                         assessmentScore:
+ *                         percentage:
  *                           type: number
+ *                           example: 85
+ *                         completedAt:
+ *                           type: string
+ *                           format: date-time
+ *                         timeTaken:
+ *                           type: number
+ *                         submittedLate:
+ *                           type: boolean
+ *                     feedback:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "Your assessment was submitted after the 30-minute time limit elapsed. You have not been moved to the next stage."
  *       401:
  *         description: Unauthorized — missing or invalid token
  *       403:
@@ -125,5 +196,5 @@ scoringRouter.get(
   authorize(["CANDIDATE", "RECRUITER", "ADMIN"]),
   asyncHandler(getJobFitScore)
 );
-
+ 
 export default scoringRouter;

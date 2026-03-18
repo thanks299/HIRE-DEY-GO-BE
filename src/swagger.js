@@ -1,5 +1,5 @@
 import swaggerJSDoc from "swagger-jsdoc";
-
+ 
 const options = {
   definition: {
     openapi: "3.0.0",
@@ -36,9 +36,12 @@ const options = {
     "./src/modules/notification/*.routes.js",
     "./src/modules/scoring/*.js",
     "./src/modules/assessment/*.js",
+    "./src/modules/company/*.js",
+    "./src/modules/bookmarks/*.js",
+    "./src/modules/cv/*.js",
     "./src/app.js",
   ],
 };
-
+ 
 const swaggerSpec = swaggerJSDoc(options);
 export default swaggerSpec;

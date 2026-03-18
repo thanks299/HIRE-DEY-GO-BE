@@ -1,18 +1,15 @@
 /**
  * Scoring Service
- * Handles job-fit score calculation, ranking, and candidate evaluation
+ * Ranks candidates by highest assessment score.
+ * Tie-breaker: earliest submission time.
+ * Candidates who submit after the time limit are excluded from ranking,
+ * marked as REJECTED, and receive a feedback prompt.
  */
-
-import {
-  calculateSkillMatchScore,
-  calculateCVRelevanceScore,
-  calculateJobFitScore,
-  getSkillAnalysis,
-  normalizeScore,
-} from "./scoring.helper.js";
-import { Application, Job, Profile } from "../../models/index.js";
+ 
+import { Application, Job } from "../../models/index.js";
+import Assessment from "../../models/assessment.model.js";
 import mongoose from "mongoose";
-
+ 
 const assertValidObjectId = (id, label) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const error = new Error(`Invalid ${label}`);
@@ -20,261 +17,271 @@ const assertValidObjectId = (id, label) => {
     throw error;
   }
 };
-
+ 
 const canRecruiterAccessJob = (user, job) => {
   if (!user) return false;
   if (user.role === "ADMIN") return true;
   if (user.role !== "RECRUITER") return false;
   return String(job.postedBy) === String(user._id);
 };
-
+ 
 /**
- * Get ranked candidates for a specific job
- * Fetches all applications for a job, calculates scores, and returns ranked list
- * @param {string} jobId - The job ID
- * @returns {object} - Ranked candidates with scores and details
+ * Check if a candidate submitted within the allowed time limit.
+ * Uses createdAt (started) vs completedAt (submitted) on the result.
+ * Includes a 10-second grace period for network latency.
+ */
+const submittedOnTime = (result, timeLimitMinutes) => {
+  if (!result?.completedAt || !result?.createdAt) return false;
+ 
+  const timeTakenMs = new Date(result.completedAt) - new Date(result.createdAt);
+  const timeLimitMs = timeLimitMinutes * 60 * 1000;
+ 
+  return timeTakenMs <= timeLimitMs + 10_000;
+};
+ 
+/**
+ * Get ranked candidates for a specific job.
+ * - Only candidates who submitted on time are ranked.
+ * - Candidates with no submission or late submission are rejected with feedback.
+ * Ranking: highest assessment score first.
+ * Tie-breaker: earliest completedAt time.
  */
 export const getRankedCandidatesForJob = async (jobId, requester) => {
   assertValidObjectId(jobId, "job ID");
-
-  const job = await Job.findById(jobId).select("title requiredSkills postedBy");
+ 
+  const job = await Job.findById(jobId).select("title requiredSkills postedBy assessmentId");
   if (!job) {
     const error = new Error("Job not found");
     error.status = 404;
     throw error;
   }
-
+ 
   if (!canRecruiterAccessJob(requester, job)) {
     const error = new Error("You do not have permission to access this job ranking");
     error.status = 403;
     throw error;
   }
-
+ 
+  // Get time limit from the linked assessment
+  let timeLimitMinutes = null;
+  if (job.assessmentId) {
+    const assessment = await Assessment.findById(job.assessmentId).select("timeLimit");
+    timeLimitMinutes = assessment?.timeLimit ?? null;
+  }
+ 
   const applications = await Application.find({ jobId })
     .populate("userId", "email")
-    .populate("assessmentResultId", "score maxScore percentage feedback completedAt timeTaken");
-
+    .populate("assessmentResultId");
+ 
   if (applications.length === 0) {
     return {
       jobId,
       title: job.title,
       totalApplications: 0,
-      candidates: [],
+      totalRanked: 0,
+      totalExcluded: 0,
+      ranked: [],
+      excluded: [],
     };
   }
-
-  const userIds = applications
-    .map((application) => application.userId?._id)
-    .filter(Boolean);
-
-  const profiles = await Profile.find({ userId: { $in: userIds } })
-    .select("userId skills experience education bio resumeUrl avatarUrl");
-
-  const profileByUserId = new Map(
-    profiles.map((profile) => [String(profile.userId), profile])
-  );
-
-  const candidatesWithScores = applications.map((application) => {
+ 
+  const ranked = [];
+  const excluded = [];
+  const bulkOps = [];
+ 
+  for (const application of applications) {
+    const result = application.assessmentResultId;
+    const email = application.userId?.email || null;
     const userId = application.userId?._id;
-    const profile = userId ? profileByUserId.get(String(userId)) : null;
-    const scoreBreakdown = calculateScoreBreakdown(application, job, profile);
-
-    return {
+ 
+    // ── Case 1: No submission at all ──────────────────────────
+    if (!result) {
+      excluded.push({
+        applicationId: application._id,
+        userId,
+        email,
+        status: "REJECTED",
+        reason: "no_submission",
+        feedback:
+          "You did not submit the assessment. You have not been moved to the next stage.",
+      });
+ 
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: application._id },
+          update: {
+            $set: { status: "REJECTED", rank: null, jobFitScore: 0 },
+          },
+        },
+      });
+ 
+      continue;
+    }
+ 
+    // ── Case 2: Late submission ───────────────────────────────
+    if (timeLimitMinutes !== null && !submittedOnTime(result, timeLimitMinutes)) {
+      excluded.push({
+        applicationId: application._id,
+        userId,
+        email,
+        status: "REJECTED",
+        reason: "late_submission",
+        submittedAt: result.completedAt,
+        feedback: `Your assessment was submitted after the ${timeLimitMinutes}-minute time limit elapsed. You have not been moved to the next stage.`,
+      });
+ 
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: application._id },
+          update: {
+            $set: { status: "REJECTED", rank: null, jobFitScore: 0 },
+          },
+        },
+      });
+ 
+      continue;
+    }
+ 
+    // ── Case 3: Valid on-time submission ──────────────────────
+    ranked.push({
       applicationId: application._id,
       userId,
-      email: application.userId?.email || null,
+      email,
       status: application.status,
       appliedAt: application.appliedAt,
-      jobFitScore: scoreBreakdown.jobFitScore,
-      scoreBreakdown: scoreBreakdown.breakdown,
-      skillAnalysis: getSkillAnalysis(profile?.skills || [], job.requiredSkills || []),
-    };
+      assessmentScore: result.percentage ?? 0,
+      rawScore: result.score ?? 0,
+      maxScore: result.maxScore ?? 0,
+      completedAt: result.completedAt,
+      timeTaken: result.timeTaken ?? null,
+      hasSubmitted: true,
+    });
+  }
+ 
+  // ── Sort: highest score → earliest submission ─────────────────
+  ranked.sort((a, b) => {
+    if (b.assessmentScore !== a.assessmentScore) {
+      return b.assessmentScore - a.assessmentScore;
+    }
+    return new Date(a.completedAt) - new Date(b.completedAt);
   });
-
-  candidatesWithScores.sort((a, b) => b.jobFitScore - a.jobFitScore);
-
-  candidatesWithScores.forEach((candidate, index) => {
+ 
+  // Assign ranks and queue DB updates
+  ranked.forEach((candidate, index) => {
     candidate.rank = index + 1;
-  });
-
-  await Application.bulkWrite(
-    candidatesWithScores.map((candidate) => ({
+ 
+    bulkOps.push({
       updateOne: {
         filter: { _id: candidate.applicationId },
         update: {
           $set: {
             rank: candidate.rank,
-            jobFitScore: candidate.jobFitScore,
-            scoreBreakdown: candidate.scoreBreakdown,
+            jobFitScore: candidate.assessmentScore,
+            status: "ASSESSED",
           },
         },
       },
-    }))
-  );
-
+    });
+  });
+ 
+  // Persist all updates in one round trip
+  if (bulkOps.length > 0) {
+    await Application.bulkWrite(bulkOps);
+  }
+ 
   return {
     jobId,
     title: job.title,
-    totalApplications: candidatesWithScores.length,
-    candidates: candidatesWithScores,
+    totalApplications: applications.length,
+    totalRanked: ranked.length,
+    totalExcluded: excluded.length,
+    ranked,
+    excluded,
   };
 };
-
+ 
 /**
- * Calculate score breakdown for a specific application
- * @param {object} application - Application document
- * @param {object} job - Job document
- * @returns {object} - Score breakdown with component scores
- */
-export const calculateScoreBreakdown = (application, job, profile = null) => {
-  let assessmentScore = 0;
-  let skillMatchScore = 0;
-  let cvRelevanceScore = 0;
-
-  // Step 1: Get assessment score
-  if (application.assessmentResultId) {
-    const assessmentResult = application.assessmentResultId;
-    assessmentScore = assessmentResult.percentage || 0;
-  }
-
-  // Step 2: Get skill match score
-  if (profile) {
-    skillMatchScore = calculateSkillMatchScore(
-      profile.skills,
-      job.requiredSkills
-    );
-
-    // Step 3: Get CV relevance score
-    cvRelevanceScore = calculateCVRelevanceScore(profile, job.requiredSkills);
-  }
-
-  // Step 4: Calculate overall job-fit score
-  const jobFitScore = calculateJobFitScore(
-    assessmentScore,
-    skillMatchScore,
-    cvRelevanceScore
-  );
-
-  return {
-    jobFitScore: normalizeScore(jobFitScore),
-    breakdown: {
-      assessmentScore: normalizeScore(assessmentScore),
-      skillMatchScore: normalizeScore(skillMatchScore),
-      cvRelevanceScore: normalizeScore(cvRelevanceScore),
-    },
-  };
-};
-
-/**
- * Get detailed job-fit score breakdown for a specific application
- * @param {string} applicationId - The application ID
- * @returns {object} - Detailed score breakdown
+ * Get score breakdown for a specific application.
+ * Also returns feedback if the candidate was excluded.
  */
 export const getJobFitScoreBreakdown = async (applicationId, requester) => {
   assertValidObjectId(applicationId, "application ID");
-
+ 
   const application = await Application.findById(applicationId)
-    .populate("jobId", "title requiredSkills postedBy")
+    .populate("jobId", "title requiredSkills postedBy assessmentId")
     .populate("userId", "email")
-    .populate("assessmentResultId", "score maxScore percentage feedback completedAt timeTaken");
-
+    .populate("assessmentResultId");
+ 
   if (!application) {
     const error = new Error("Application not found");
     error.status = 404;
     throw error;
   }
-
+ 
   const job = application.jobId;
   const isOwnerCandidate = String(application.userId?._id) === String(requester?._id);
   const isAdmin = requester?.role === "ADMIN";
   const isAllowedRecruiter = canRecruiterAccessJob(requester, job);
-
+ 
   if (!isOwnerCandidate && !isAdmin && !isAllowedRecruiter) {
     const error = new Error("You do not have permission to view this score");
     error.status = 403;
     throw error;
   }
-
-  const profile = await Profile.findOne({ userId: application.userId._id });
-
-  const scoreBreakdown = calculateScoreBreakdown(application, job, profile);
-
-  await Application.findByIdAndUpdate(application._id, {
-    $set: {
-      jobFitScore: scoreBreakdown.jobFitScore,
-      scoreBreakdown: scoreBreakdown.breakdown,
-    },
-  });
-
-  const assessmentResult = application.assessmentResultId;
-  const assessmentFeedback = assessmentResult
-    ? {
-        score: assessmentResult.score,
-        maxScore: assessmentResult.maxScore,
-        percentage: assessmentResult.percentage,
-        timeTaken: assessmentResult.timeTaken,
-        feedback: assessmentResult.feedback,
-        completedAt: assessmentResult.completedAt,
-      }
-    : null;
-
-  const skillAnalysis = getSkillAnalysis(
-    profile?.skills || [],
-    job.requiredSkills || []
-  );
-
+ 
+  const result = application.assessmentResultId;
+ 
+  // Check time limit for context
+  let timeLimitMinutes = null;
+  let submittedLate = false;
+  if (job.assessmentId) {
+    const assessment = await Assessment.findById(job.assessmentId).select("timeLimit");
+    timeLimitMinutes = assessment?.timeLimit ?? null;
+    if (result && timeLimitMinutes !== null) {
+      submittedLate = !submittedOnTime(result, timeLimitMinutes);
+    }
+  }
+ 
+  // Build feedback for candidate
+  let feedback = null;
+  if (!result) {
+    feedback =
+      "You did not submit the assessment. You have not been moved to the next stage.";
+  } else if (submittedLate) {
+    feedback = `Your assessment was submitted after the ${timeLimitMinutes}-minute time limit elapsed. You have not been moved to the next stage.`;
+  }
+ 
   return {
     applicationId,
     jobId: job._id,
     jobTitle: job.title,
     status: application.status,
     appliedAt: application.appliedAt,
-    jobFitScore: scoreBreakdown.jobFitScore,
-    scoreBreakdown: scoreBreakdown.breakdown,
-    assessmentFeedback,
-    skillAnalysis,
-    recommendations: generateRecommendations(scoreBreakdown, skillAnalysis, profile),
+    rank: application.rank ?? null,
+    assessment: result
+      ? {
+          score: result.score,
+          maxScore: result.maxScore,
+          percentage: result.percentage,
+          completedAt: result.completedAt,
+          timeTaken: result.timeTaken,
+          submittedLate,
+        }
+      : null,
+    hasSubmitted: !!result,
+    feedback,
   };
 };
-
+ 
 /**
- * Generate recommendations for candidate based on their score breakdown
- * @param {object} scoreBreakdown - The score breakdown object
- * @param {object} skillAnalysis - Skill analysis data
- * @param {object} profile - Candidate's profile
- * @returns {array} - Array of recommendation strings
+ * calculateScoreBreakdown shim — kept for any existing imports.
  */
-const generateRecommendations = (scoreBreakdown, skillAnalysis, profile) => {
-  const recommendations = [];
-
-  const { assessmentScore, cvRelevanceScore } =
-    scoreBreakdown.breakdown;
-
-  // Assessment recommendations
-  if (assessmentScore < 50) {
-    recommendations.push(
-      "Consider studying the required skills more thoroughly before reapplying"
-    );
-  } else if (assessmentScore < 75) {
-    recommendations.push("Good effort! Practice more to improve your score");
-  }
-
-  // Skill match recommendations
-  if (skillAnalysis.missingSkills && skillAnalysis.missingSkills.length > 0) {
-    recommendations.push(
-      `Consider learning: ${skillAnalysis.missingSkills.slice(0, 3).join(", ")}`
-    );
-  }
-
-  // CV relevance recommendations
-  if (cvRelevanceScore < 60) {
-    if (!profile?.resumeUrl) {
-      recommendations.push("Upload your resume to improve your CV relevance score");
-    }
-    if (!profile?.experience || profile.experience.length === 0) {
-      recommendations.push("Add your work experience to strengthen your profile");
-    }
-  }
-
-  return recommendations;
+export const calculateScoreBreakdown = (application) => {
+  const result = application.assessmentResultId;
+  const percentage = result?.percentage ?? 0;
+ 
+  return {
+    assessmentScore: percentage,
+  };
 };
+ 
