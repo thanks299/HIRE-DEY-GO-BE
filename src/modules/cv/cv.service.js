@@ -7,7 +7,7 @@ import { ANTHROPIC_API_KEY } from "../../config/env.js";
 const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
  
 // ── Upload CV to Cloudinary ─────────────────────────────────────
-export const uploadCV = async (userId, fileBuffer, mimetype, originalName) => {
+export const uploadCV = async (userId, fileBuffer, mimetype) => {
   const result = await uploadToCloudinary(fileBuffer, mimetype, {
     folder: "hire-dey-go/cvs",
     resource_type: "raw",
