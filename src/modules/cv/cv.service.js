@@ -1,10 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 import pdfParse from "pdf-parse-new";
 import { uploadToCloudinary } from "../../utils/cloudinary.js";
 import Profile from "../../models/profile.model.js";
-import { ANTHROPIC_API_KEY } from "../../config/env.js";
+import { GROQ_API_KEY } from "../../config/env.js";
  
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+const groq = new Groq({ apiKey: GROQ_API_KEY });
  
 // ── Upload CV to Cloudinary ─────────────────────────────────────
 export const uploadCV = async (userId, fileBuffer, mimetype) => {
@@ -15,7 +15,6 @@ export const uploadCV = async (userId, fileBuffer, mimetype) => {
     format: "pdf",
   });
  
-  // Save URL to profile
   let profile = await Profile.findOne({ userId });
   if (profile) {
     profile.resumeUrl = result.secure_url;
@@ -33,7 +32,7 @@ const extractTextFromPDF = async (buffer) => {
   return data.text;
 };
  
-// ── Parse CV with Claude API ────────────────────────────────────
+// ── Parse CV with Groq API ────────────────────────────────────
 export const parseCV = async (userId, fileBuffer) => {
   const rawText = await extractTextFromPDF(fileBuffer);
  
@@ -79,26 +78,32 @@ The JSON must follow this exact structure:
 }
  
 CV Text:
-${rawText.slice(0, 8000)}`; // limit to avoid token overflow
+${rawText.slice(0, 8000)}`;
  
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 2000,
+  const completion = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
     messages: [{ role: "user", content: prompt }],
+    max_tokens: 2000,
+    temperature: 0.2,
   });
  
-  const responseText = message.content[0].text.trim();
+  const responseText = completion.choices[0].message.content.trim();
+ 
+  const cleaned = responseText
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
  
   let parsed;
   try {
-    parsed = JSON.parse(responseText);
+    parsed = JSON.parse(cleaned);
   } catch {
     const err = new Error("Failed to parse CV data from AI response");
     err.statusCode = 500;
     throw err;
   }
  
-  // Save parsed data to profile for review
   let profile = await Profile.findOne({ userId });
   if (profile) {
     profile.parsedResume = parsed;
@@ -128,31 +133,26 @@ export const applyParsedCV = async (userId) => {
  
   const parsed = profile.parsedResume;
  
-  // Only overwrite fields that are currently empty
   if (parsed.firstName && !profile.firstName) profile.firstName = parsed.firstName;
   if (parsed.lastName && !profile.lastName) profile.lastName = parsed.lastName;
   if (parsed.phone && !profile.phone) profile.phone = parsed.phone;
   if (parsed.location && !profile.location) profile.location = parsed.location;
   if (parsed.bio && !profile.bio) profile.bio = parsed.bio;
  
-  // Merge skills (deduplicate)
   if (parsed.skills?.length) {
     const existing = new Set(profile.skills.map((s) => s.toLowerCase()));
     const newSkills = parsed.skills.filter((s) => !existing.has(s.toLowerCase()));
     profile.skills = [...profile.skills, ...newSkills];
   }
  
-  // Append experience entries
   if (parsed.experience?.length) {
     profile.experience = [...profile.experience, ...parsed.experience];
   }
  
-  // Append education entries
   if (parsed.education?.length) {
     profile.education = [...profile.education, ...parsed.education];
   }
  
-  // Clear parsedResume after applying
   profile.parsedResume = null;
   await profile.save();
  

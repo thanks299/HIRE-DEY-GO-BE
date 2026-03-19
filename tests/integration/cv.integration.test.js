@@ -238,7 +238,11 @@ describe("CV Endpoints Integration", () => {
           ],
         },
       },
+<<<<<<< HEAD
       { upsert: true, returnDocument: "after" }
+=======
+      { upsert: true, new: true }
+>>>>>>> 623e4aa (feat: implement company profiles, bookmarks, CV parsing, and scoring refactor)
     );
  
     const response = await request(app)
@@ -261,4 +265,8 @@ describe("CV Endpoints Integration", () => {
   });
 });
  
+<<<<<<< HEAD
 setTimeout(() => process.exit(0), 2000).unref();
+=======
+setTimeout(() => process.exit(0), 2000).unref();
+>>>>>>> 623e4aa (feat: implement company profiles, bookmarks, CV parsing, and scoring refactor)
