@@ -12,7 +12,6 @@ import Profile from "../../src/models/profile.model.js";
 const TEST_PASSWORD = process.env.TEST_PASSWORD || "TestPassword123";
  
 // ── Create a minimal valid PDF buffer for testing ─────────────
-// This is the smallest valid PDF structure — enough for multer to accept
 const MINIMAL_PDF = Buffer.from(
   "%PDF-1.4\n1 0 obj<</Type /Catalog /Pages 2 0 R>>endobj " +
   "2 0 obj<</Type /Pages /Kids [3 0 R] /Count 1>>endobj " +
@@ -79,8 +78,6 @@ describe("CV Endpoints Integration", () => {
       .set("Authorization", `Bearer ${candidateToken}`)
       .attach("cv", MINIMAL_PDF, { filename: "test-cv.pdf", contentType: "application/pdf" });
  
-    // 200 = uploaded successfully, 500 = Cloudinary not configured in test env
-    // Either is acceptable — we verify auth and file acceptance work
     assert.ok(
       response.status === 200 || response.status === 500,
       `Unexpected status: ${response.status}`
@@ -158,7 +155,6 @@ describe("CV Endpoints Integration", () => {
   });
  
   test("POST /api/v1/cv/parse should return 422 for empty/unreadable PDF", async () => {
-    // A PDF that has no extractable text triggers the 422
     const emptyPdf = Buffer.from("%PDF-1.4 %%EOF");
  
     const response = await request(app)
@@ -166,7 +162,6 @@ describe("CV Endpoints Integration", () => {
       .set("Authorization", `Bearer ${candidateToken}`)
       .attach("cv", emptyPdf, { filename: "empty.pdf", contentType: "application/pdf" });
  
-    // 422 = no text extracted, 500 = Anthropic not configured in test env
     assert.ok(
       response.status === 422 || response.status === 500,
       `Unexpected status: ${response.status}`
@@ -176,12 +171,10 @@ describe("CV Endpoints Integration", () => {
   // ── Apply ─────────────────────────────────────────────────────
  
   test("POST /api/v1/cv/apply should return 400 when no parsed CV data exists", async () => {
-    // Fresh candidate with no parsedResume on profile
     const response = await request(app)
       .post("/api/v1/cv/apply")
       .set("Authorization", `Bearer ${candidateToken}`);
  
-    // 400 = no parsed data, 404 = no profile yet — both are valid
     assert.ok(
       response.status === 400 || response.status === 404,
       `Unexpected status: ${response.status}`
@@ -207,7 +200,6 @@ describe("CV Endpoints Integration", () => {
   });
  
   test("POST /api/v1/cv/apply should apply parsed data when parsedResume exists", async () => {
-    // Manually seed a profile with parsedResume data to simulate a prior parse
     await Profile.findOneAndUpdate(
       { userId: candidate._id },
       {
@@ -238,11 +230,7 @@ describe("CV Endpoints Integration", () => {
           ],
         },
       },
-<<<<<<< HEAD
       { upsert: true, returnDocument: "after" }
-=======
-      { upsert: true, new: true }
->>>>>>> 623e4aa (feat: implement company profiles, bookmarks, CV parsing, and scoring refactor)
     );
  
     const response = await request(app)
@@ -253,20 +241,15 @@ describe("CV Endpoints Integration", () => {
     assert.strictEqual(response.body.success, true);
     assert.ok(response.body.data);
  
-    // Profile should now have the applied data
     const profile = response.body.data;
     assert.ok(profile.skills.includes("Node.js"));
     assert.ok(profile.experience.length >= 1);
     assert.ok(profile.education.length >= 1);
  
-    // parsedResume should be cleared after applying
     const dbProfile = await Profile.findOne({ userId: candidate._id });
     assert.strictEqual(dbProfile.parsedResume, null);
   });
 });
  
-<<<<<<< HEAD
 setTimeout(() => process.exit(0), 2000).unref();
-=======
-setTimeout(() => process.exit(0), 2000).unref();
->>>>>>> 623e4aa (feat: implement company profiles, bookmarks, CV parsing, and scoring refactor)
+ 

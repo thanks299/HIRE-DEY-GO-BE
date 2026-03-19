@@ -96,7 +96,7 @@ router.post("/parse", handleUpload, cvController.parseCV);
 
 /**
  * @swagger
- * api/v1/cv/apply:
+ * /api/v1/cv/apply:
  *   post:
  *     summary: Apply parsed CV data to your profile
  *     description: Takes the last parsed CV data and merges it into your profile. Only fills empty fields and appends new experience/education/skills.
