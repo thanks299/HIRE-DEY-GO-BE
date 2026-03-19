@@ -1,19 +1,19 @@
 import Profile from "../../models/profile.model.js";
-
+ 
 export const getMyProfile = async (req, res) => {
   try {
-    const profile = await Profile.findOne({ userId: req.user.id }).populate(
+    const profile = await Profile.findOne({ userId: req.user.userId }).populate(
       "userId",
       "-password"
     );
-
+ 
     if (!profile) {
       return res.status(404).json({
         success: false,
         message: "Profile not found",
       });
     }
-
+ 
     return res.status(200).json({
       success: true,
       message: "Profile fetched successfully",
@@ -27,7 +27,7 @@ export const getMyProfile = async (req, res) => {
     });
   }
 };
-
+ 
 export const createOrUpdateProfile = async (req, res) => {
   try {
     const {
@@ -43,11 +43,11 @@ export const createOrUpdateProfile = async (req, res) => {
       parsedResume,
       avatarUrl,
     } = req.body;
-
+ 
     const profile = await Profile.findOneAndUpdate(
-      { userId: req.user.id },
+      { userId: req.user.userId },
       {
-        userId: req.user.id,
+        userId: req.user.userId,
         firstName,
         lastName,
         phone,
@@ -61,12 +61,12 @@ export const createOrUpdateProfile = async (req, res) => {
         avatarUrl,
       },
       {
-        returnDocument: 'after',
+        returnDocument: "after",
         upsert: true,
-        runValidators: true
+        runValidators: true,
       }
     );
-
+ 
     return res.status(200).json({
       success: true,
       message: "Profile saved successfully",
