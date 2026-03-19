@@ -44,24 +44,25 @@ export const createOrUpdateProfile = async (req, res) => {
       avatarUrl,
     } = req.body;
  
+    // Only include fields that were actually sent in the request
+    const updateFields = {};
+    if (firstName !== undefined) updateFields.firstName = firstName;
+    if (lastName !== undefined) updateFields.lastName = lastName;
+    if (phone !== undefined) updateFields.phone = phone;
+    if (location !== undefined) updateFields.location = location;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (skills !== undefined) updateFields.skills = skills;
+    if (experience !== undefined) updateFields.experience = experience;
+    if (education !== undefined) updateFields.education = education;
+    if (resumeUrl !== undefined) updateFields.resumeUrl = resumeUrl;
+    if (parsedResume !== undefined) updateFields.parsedResume = parsedResume;
+    if (avatarUrl !== undefined) updateFields.avatarUrl = avatarUrl;
+ 
     const profile = await Profile.findOneAndUpdate(
       { userId: req.user.userId },
+      { $set: { ...updateFields, userId: req.user.userId } },
       {
-        userId: req.user.userId,
-        firstName,
-        lastName,
-        phone,
-        location,
-        bio,
-        skills,
-        experience,
-        education,
-        resumeUrl,
-        parsedResume,
-        avatarUrl,
-      },
-      {
-        returnDocument: "after",
+        new: true,
         upsert: true,
         runValidators: true,
       }
@@ -80,3 +81,4 @@ export const createOrUpdateProfile = async (req, res) => {
     });
   }
 };
+ 
