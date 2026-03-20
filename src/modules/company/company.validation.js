@@ -27,8 +27,10 @@ export const createCompanySchema = Joi.object({
     .optional(),
   yearEstablished: Joi.number().integer().min(1800).max(currentYear).optional(),
   location: Joi.string().trim().max(200).optional(),
+  country: Joi.string().trim().max(100).optional(),
+  city: Joi.string().trim().max(100).optional(),
   socialLinks: socialLinksSchema.optional(),
-});
+}).unknown();
  
 export const updateCompanySchema = Joi.object({
   name: Joi.string().trim().min(2).max(200).optional(),
@@ -47,6 +49,8 @@ export const updateCompanySchema = Joi.object({
     .optional(),
   yearEstablished: Joi.number().integer().min(1800).max(currentYear).optional(),
   location: Joi.string().trim().max(200).optional(),
+  country: Joi.string().trim().max(100).optional(),
+  city: Joi.string().trim().max(100).optional(),
   socialLinks: socialLinksSchema.optional(),
-}).min(1);
+}).min(1).unknown();
  
