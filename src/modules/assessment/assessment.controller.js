@@ -1,13 +1,15 @@
 import Assessment from "../../models/assessment.model.js";
 import AssessmentResult from "../../models/assessmentResult.model.js";
 import Job from "../../models/job.model.js";
+import Application from "../../models/application.model.js";
  
 export const createAssessment = async (req, res, next) => {
   try {
     const { title, description, skills, questions, timeLimit } = req.body;
- 
+    const  { userId } = req.user;
+
     const assessment = await Assessment.create({
-      createdBy: req.user.userId,
+      createdBy: userId,
       title,
       description,
       skills,
@@ -53,9 +55,13 @@ export const attachAssessmentToJob = async (req, res, next) => {
  
 export const startAssessment = async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+
+    const  { userId } = req.user;
     const { jobId } = req.params;
- 
+
+    console.log("REQ USER:", req.user);
+console.log("REQ USER ID:", req.userId);
+
     const job = await Job.findById(jobId).populate("assessmentId");
  
     if (!job || !job.assessmentId) {
@@ -77,11 +83,17 @@ export const startAssessment = async (req, res, next) => {
       error.statusCode = 400;
       throw error;
     }
- 
+
+    const totalPoints = assessment.questions.reduce(
+      (sum, q) => sum + (q.points || 0),
+      0
+    );
+
     const result = await AssessmentResult.create({
       assessmentId: assessment._id,
       userId,
       jobId,
+      maxScore: totalPoints,
       startedAt: new Date(),
       status: "in-progress"
     });
@@ -111,8 +123,9 @@ export const submitAssessment = async (req, res, next) => {
   try {
     const { assessmentId } = req.params;
     const { jobId, answers } = req.body;
-    const userId = req.user.userId;
- 
+
+    const  { userId } = req.user;
+
     const assessment = await Assessment.findById(assessmentId);
  
     if (!assessment) {
@@ -160,71 +173,36 @@ export const submitAssessment = async (req, res, next) => {
     const timeTaken = (now - result.startedAt) / 1000 / 60; // minutes
  
     if (timeTaken >= assessment.timeLimit) {
-      score = score - 20;
+      score = Math.max(0, score - 20);
     }
- 
-    const percentage = (score / assessment.totalPoints) * 100;
- 
-    // ── Rich feedback based on score ──────────────────────────
-    let feedback;
-    let passed;
- 
-    if (percentage >= 90) {
-      passed = true;
-      feedback = {
-        status: "Excellent",
-        message: "Outstanding performance! You've demonstrated exceptional knowledge and skill. You are highly recommended for this role. Expect to hear from the recruiter shortly regarding next steps.",
-        score: `${percentage.toFixed(1)}%`,
-        recommendation: "Highly Recommended"
-      };
-    } else if (percentage >= 70) {
-      passed = true;
-      feedback = {
-        status: "Passed",
-        message: "Well done! You've passed the assessment and shown a solid understanding of the required skills. The recruiter will review your application and reach out if you are shortlisted for an interview.",
-        score: `${percentage.toFixed(1)}%`,
-        recommendation: "Recommended"
-      };
-    } else if (percentage >= 50) {
-      passed = false;
-      feedback = {
-        status: "Below Threshold",
-        message: "You showed some understanding but did not meet the minimum score required for this role. We encourage you to strengthen your skills and apply again in the future.",
-        score: `${percentage.toFixed(1)}%`,
-        recommendation: "Not Recommended"
-      };
-    } else {
-      passed = false;
-      feedback = {
-        status: "Failed",
-        message: "Unfortunately, your score did not meet the requirements for this position. Don't be discouraged — use this as an opportunity to identify areas for growth and try again.",
-        score: `${percentage.toFixed(1)}%`,
-        recommendation: "Not Recommended"
-      };
-    }
- 
+
+    result.userId = userId;
     result.answers = answers;
     result.score = score;
-    result.maxScore = assessment.totalPoints;
-    result.timeTaken = timeTaken;
-    result.percentage = percentage;
+    result.timeTaken = Number.parseInt(timeTaken);
     result.status = "completed";
-    result.submittedAt = now;
-    result.feedback = feedback.message;
- 
+    result.completedAt = now;
+
     await result.save();
+
+    await Application.findOneAndUpdate(
+      { userId, jobId },
+      { assessmentResultId: result._id }
+    );
  
     res.status(201).json({
       success: true,
       message: "Assessment successfully submitted",
       data: {
         resultId: result._id,
+        userId: result.userId,
         score: result.score,
         maxScore: result.maxScore,
-        percentage: `${percentage.toFixed(1)}%`,
+        startedAt: result.startedAt,
+        completedAt: now,
         timeTaken: `${timeTaken.toFixed(1)} minutes`,
-        passed,
-        feedback,
+        status: "completed",
+        feedback: result.feedback,
       }
     });
  
@@ -236,8 +214,8 @@ export const submitAssessment = async (req, res, next) => {
 export const getAssessmentResult = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
- 
+    const  { userId } = req.user;
+
     const result = await AssessmentResult.findOne({
       _id: id,
       userId
@@ -263,7 +241,8 @@ export const getAssessmentResult = async (req, res, next) => {
 export const updateAssessment = async (req, res, next) => {
   try {
     const { id } = req.params;
- 
+    const  { userId } = req.user;
+
     const assessment = await Assessment.findById(id);
  
     if (!assessment) {
@@ -271,8 +250,8 @@ export const updateAssessment = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
- 
-    if (assessment.createdBy.toString() !== req.user.userId) {
+
+    if (assessment.createdBy.toString() !== userId) {
       const error = new Error("Not authorized to update this assessment");
       error.statusCode = 403;
       throw error;
@@ -297,7 +276,8 @@ export const updateAssessment = async (req, res, next) => {
 export const deleteAssessment = async (req, res, next) => {
   try {
     const { id } = req.params;
- 
+    const  { userId } = req.user;
+
     const assessment = await Assessment.findById(id);
  
     if (!assessment) {
@@ -305,8 +285,8 @@ export const deleteAssessment = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
- 
-    if (assessment.createdBy.toString() !== req.user.userId) {
+
+    if (assessment.createdBy.toString() !== userId) {
       const error = new Error("Not authorized to delete this assessment");
       error.statusCode = 403;
       throw error;

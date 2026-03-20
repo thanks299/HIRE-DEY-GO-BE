@@ -8,6 +8,7 @@ import Job from "../../models/job.model.js";
 export const createApplication = async (req, res) => {
   try {
     const { jobId, coverLetter, resumeUrl } = req.body;
+    const { userId } = req.user;
 
     if (!jobId) {
       return res.status(400).json({
@@ -25,7 +26,7 @@ export const createApplication = async (req, res) => {
 
     const existingApplication = await Application.findOne({
       jobId,
-      userId: req.user.id,
+      userId: userId,
     });
 
     if (existingApplication) {
@@ -37,7 +38,7 @@ export const createApplication = async (req, res) => {
 
     const application = await Application.create({
       jobId,
-      userId: req.user.id,
+      userId: userId,
       coverLetter,
       resumeUrl,
     });
@@ -70,7 +71,9 @@ export const createApplication = async (req, res) => {
 
 export const getMyApplications = async (req, res) => {
   try {
-    const applications = await Application.find({ userId: req.user.id })
+    const {userId} = req.user;
+
+    const applications = await Application.find({ userId })
       .populate("jobId")
       .populate("userId", "-password")
       .populate("assessmentResultId")
@@ -94,6 +97,7 @@ export const getMyApplications = async (req, res) => {
 export const getSingleApplication = async (req, res) => {
   try {
     const { id } = req.params;
+    const { userId } = req.user;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -104,7 +108,7 @@ export const getSingleApplication = async (req, res) => {
 
     const application = await Application.findOne({
       _id: id,
-      userId: req.user.id,
+      userId: userId,
     })
       .populate("jobId")
       .populate("userId", "-password")
@@ -135,6 +139,7 @@ export const updateApplication = async (req, res) => {
   try {
     const { id } = req.params;
     const { coverLetter, resumeUrl } = req.body;
+    const { userId } = req.user;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -144,7 +149,7 @@ export const updateApplication = async (req, res) => {
     }
 
     const application = await Application.findOneAndUpdate(
-      { _id: id, userId: req.user.id },
+      { _id: id, userId: userId },
       { coverLetter, resumeUrl },
       { new: true, runValidators: true }
     );
@@ -173,6 +178,7 @@ export const updateApplication = async (req, res) => {
 export const deleteApplication = async (req, res) => {
   try {
     const { id } = req.params;
+    const { userId } = req.user;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -183,7 +189,7 @@ export const deleteApplication = async (req, res) => {
 
     const application = await Application.findOneAndDelete({
       _id: id,
-      userId: req.user.id,
+      userId: userId,
     });
 
     if (!application) {

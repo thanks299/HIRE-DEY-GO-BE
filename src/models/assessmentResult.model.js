@@ -52,6 +52,16 @@ const assessmentResultSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        status: {
+            type: String,
+            enum: ["in-progress", "completed"],
+            default: "in-progress",
+        },
+
+        startedAt: {
+            type: Date,
+            default: Date.now,
+        },
         completedAt: {
             type: Date,
             default: Date.now,
@@ -72,6 +82,7 @@ assessmentResultSchema.index({ jobId: 1 });
 assessmentResultSchema.pre("save", function () {
     if (this.maxScore > 0) {
         this.percentage = Math.round((this.score / this.maxScore) * 100);
+        this.feedback = this.percentage >= 70 ? "You passed! Your score has been recorded for ranking." : "You did not meet the required score. Your result has been recorded.";
     }
 });
 

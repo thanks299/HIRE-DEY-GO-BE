@@ -36,37 +36,77 @@ const authRouter = express.Router();
  * /api/v1/auth/register:
  *   post:
  *     tags: [Auth]
- *     summary: Register a new user
- *     description: Create a new user account
+ *     summary: Register a new user (Candidate or Recruiter)
+ *     description: >
+ *       Create a new account:
+ *       - Candidates sign up with first & last name
+ *       - Recruiters sign up with company details
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [firstName, lastName, email, password]
- *             properties:
- *               firstName:
- *                 type: string
- *                 example: John
- *               lastName:
- *                 type: string
- *                 example: Doe
- *               email:
- *                 type: string
- *                 example: john@example.com
- *               password:
- *                 type: string
- *                 example: Password123
- *               role:
- *                 type: string
- *                 enum: [CANDIDATE, RECRUITER]
- *                 example: CANDIDATE
+ *             oneOf:
+ *               - title: Candidate Registration
+ *                 type: object
+ *                 required: [firstName, lastName, email, password, role]
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   password:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ *                     enum: [CANDIDATE]
+ *
+ *               - title: Recruiter Registration
+ *                 type: object
+ *                 required: [email, password, role, companyName, companyAddress]
+ *                 properties:
+ *                   email:
+ *                     type: string
+ *                   password:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ *                     enum: [RECRUITER]
+ *                   companyName:
+ *                     type: string
+ *                   companyAddress:
+ *                     type: string
+ *                   companySize:
+ *                     type: string
+ *                     enum: [1-10, 11-50, 51-200, 201-500, 500+]
+ *
+ *           examples:
+ *             candidateExample:
+ *               summary: Candidate Signup Example
+ *               value:
+ *                 firstName: David
+ *                 lastName: James
+ *                 email: david@example.com
+ *                 password: Password123
+ *                 role: CANDIDATE
+ *
+ *             recruiterExample:
+ *               summary: Recruiter Signup Example
+ *               value:
+ *                 email: hr@techcorp.com
+ *                 password: Password123
+ *                 role: RECRUITER
+ *                 companyName: Tech Corp
+ *                 companyAddress: Abuja, Nigeria
+ *                 companySize: 11-50
+ *
  *     responses:
  *       201:
  *         description: User registered successfully
  *       400:
- *         description: Invalid input
+ *         description: Validation error
  *       409:
  *         description: Email already registered
  */

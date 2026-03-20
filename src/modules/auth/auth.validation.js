@@ -10,23 +10,23 @@ import { z } from "zod";
  */
 export const registerSchema = z.object({
   firstName: z
-    .string({ required_error: "First name is required" })
+    .string()
     .min(2, "First name must be at least 2 characters")
     .max(50, "First name must not exceed 50 characters")
     .trim()
     .regex(
       /^[a-zA-Z\s'-]+$/,
       "First name must contain only letters, spaces, hyphens, and apostrophes"
-    ),
+    ).optional(),
   lastName: z
-    .string({ required_error: "Last name is required" })
+    .string()
     .min(2, "Last name must be at least 2 characters")
     .max(50, "Last name must not exceed 50 characters")
     .trim()
     .regex(
       /^[a-zA-Z\s'-]+$/,
       "Last name must contain only letters, spaces, hyphens, and apostrophes"
-    ),
+    ).optional(),
   email: z
     .string({ required_error: "Email is required" })
     .toLowerCase()
@@ -41,7 +41,29 @@ export const registerSchema = z.object({
     ),
   role: z.enum(["CANDIDATE", "RECRUITER"], {
     errorMap: () => ({ message: "Invalid role. Only CANDIDATE or RECRUITER allowed" }),
-  }).default("CANDIDATE")
+  }).default("CANDIDATE"),
+
+  companyName: z.string().optional(),
+  companyAddress: z.string().optional(),
+  companySize: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.role === "CANDIDATE") {
+    if (!data.firstName) {
+      ctx.addIssue({ path: ["firstName"], message: "First name is required" });
+    }
+    if (!data.lastName) {
+      ctx.addIssue({ path: ["lastName"], message: "Last name is required" });
+    }
+  }
+
+  if (data.role === "RECRUITER") {
+    if (!data.companyName) {
+      ctx.addIssue({ path: ["companyName"], message: "Company name is required" });
+    }
+    if (!data.companyAddress) {
+      ctx.addIssue({ path: ["companyAddress"], message: "Company address is required" });
+    }
+  }
 });
 
 /**
