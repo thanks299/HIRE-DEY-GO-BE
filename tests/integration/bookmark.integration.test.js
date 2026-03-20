@@ -57,14 +57,14 @@ describe("Bookmark Endpoints Integration", () => {
     company = await Company.create({
       userId: recruiter._id,
       name: `Bookmark Co ${suffix}`,
-      description: "Company for bookmark tests",
+      description: "Company used in bookmark integration tests to verify bookmarking functionality for candidates.",
     });
  
     job = await Job.create({
       companyId: company._id,
       postedBy: recruiter._id,
       title: "Bookmark Test Job",
-      description: "Job for bookmark tests",
+      description: "Job used in bookmark integration tests to verify bookmarking functionality.",
       type: "FULL_TIME",
       status: "ACTIVE",
     });

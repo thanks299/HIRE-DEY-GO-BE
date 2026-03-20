@@ -91,7 +91,7 @@ describe("Company Endpoints Integration", () => {
       .send({
         name: `Test Company ${suffix}`,
         about: "A leading technology company building innovative solutions",
-        description: "A test company",
+        description: "A leading technology company building innovative solutions for modern businesses.",
         industry: "Technology",
         teamSize: "11-50",
         organizationType: "STARTUP",

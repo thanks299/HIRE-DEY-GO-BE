@@ -19,27 +19,7 @@ import cvRoutes from "./modules/cv/cv.routes.js";
 
 const app = express();
 
-const allowedOrigins = [
-  FRONTEND_URL,
-  CLIENT_URL,
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  "http://localhost:5000",
-  "http://127.0.0.1:5000",
-].filter(Boolean);
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow non-browser clients (Postman, server-to-server) with no origin
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 app.use(rateLimiter);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
