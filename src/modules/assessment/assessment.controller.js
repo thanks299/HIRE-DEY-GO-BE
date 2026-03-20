@@ -179,7 +179,6 @@ export const submitAssessment = async (req, res, next) => {
     result.userId = userId;
     result.answers = answers;
     result.score = score;
-    result.maxScore = result.maxScore;
     result.timeTaken = Number.parseInt(timeTaken);
     result.status = "completed";
     result.completedAt = now;
