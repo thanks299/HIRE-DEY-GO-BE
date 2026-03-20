@@ -50,7 +50,8 @@ const sendEmail = async (payload) => {
     console.log(`✓ Email sent to ${payload.to} [id: ${data.id}]`);
   } catch (error) {
     console.error("Failed to send email:", error.message);
-    throw new Error("Mail sending failed", { cause: error });
+    const cause = error?.message ? `: ${error.message}` : "";
+    throw new Error(`Mail sending failed${cause}`, { cause: error });
   }
 };
 
