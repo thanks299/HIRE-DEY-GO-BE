@@ -2,12 +2,9 @@ import * as authService from "./auth.service.js";
 import { createNotification } from "../notification/notification.service.js";
 import { NotificationTypes, createNotificationMessage } from "../notification/notification.templates.js";
 
-/**
- * Register a new user
- */
-export const register = async (req, res) => {
+const handleRegister = async (payload, res) => {
   try {
-    const result = await authService.registerUser(req.body);
+    const result = await authService.registerUser(payload);
 
     if (result.user.role === "RECRUITER") {
       await createNotification({
@@ -40,6 +37,27 @@ export const register = async (req, res) => {
       message: error.message || "Registration failed",
     });
   }
+};
+
+/**
+ * Register a new user (legacy combined endpoint)
+ */
+export const register = async (req, res) => {
+  return handleRegister(req.body, res);
+};
+
+/**
+ * Register a new candidate
+ */
+export const registerCandidate = async (req, res) => {
+  return handleRegister({ ...req.body, role: "CANDIDATE" }, res);
+};
+
+/**
+ * Register a new recruiter
+ */
+export const registerRecruiter = async (req, res) => {
+  return handleRegister({ ...req.body, role: "RECRUITER" }, res);
 };
 
 /**
