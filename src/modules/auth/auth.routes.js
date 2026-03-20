@@ -4,6 +4,8 @@ import verifyToken from "../../middlewares/auth.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 import {
   validateRegister,
+  validateCandidateRegister,
+  validateRecruiterRegister,
   validateLogin,
   validateRefreshToken,
   validateVerifyEmail,
@@ -13,6 +15,8 @@ import {
 } from "./auth.validation.js";
 import {
   register,
+  registerCandidate,
+  registerRecruiter,
   login,
   refreshToken,
   verifyEmail,
@@ -114,6 +118,94 @@ authRouter.post(
   "/register",
   validate(validateRegister),
   asyncHandler(register)
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/register/candidate:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register a new candidate
+ *     description: Candidates sign up with first & last name
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firstName, lastName, email, password]
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *           example:
+ *             firstName: David
+ *             lastName: James
+ *             email: david@example.com
+ *             password: Password123
+ *     responses:
+ *       201:
+ *         description: Candidate registered successfully
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: Email already registered
+ */
+authRouter.post(
+  "/register/candidate",
+  validate(validateCandidateRegister),
+  asyncHandler(registerCandidate)
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/register/recruiter:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register a new recruiter
+ *     description: Recruiters sign up with company details
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password, companyName, companyAddress]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               companyName:
+ *                 type: string
+ *               companyAddress:
+ *                 type: string
+ *               companySize:
+ *                 type: string
+ *                 enum: [1-10, 11-50, 51-200, 201-500, 500+]
+ *           example:
+ *             email: hr@techcorp.com
+ *             password: Password123
+ *             companyName: Tech Corp
+ *             companyAddress: Abuja, Nigeria
+ *             companySize: 11-50
+ *     responses:
+ *       201:
+ *         description: Recruiter registered successfully
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: Email already registered
+ */
+authRouter.post(
+  "/register/recruiter",
+  validate(validateRecruiterRegister),
+  asyncHandler(registerRecruiter)
 );
 
 /**
