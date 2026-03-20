@@ -251,43 +251,43 @@ describe("Company Endpoints Integration", () => {
  
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.body.success, true);
-    assert.ok(Array.isArray(response.body.data.jobs));
-    assert.ok(response.body.data.jobs.length >= 1);
+    assert.ok(Array.isArray(response.body.jobs));
+    assert.ok(response.body.jobs.length >= 1);
   });
- 
+
   test("GET /api/v1/companies/:id/jobs should return 404 for non-existent company", async () => {
     const fakeId = new mongoose.Types.ObjectId().toString();
     const response = await request(app)
       .get(`/api/v1/companies/${fakeId}/jobs`);
- 
+
     assert.strictEqual(response.status, 404);
     assert.strictEqual(response.body.success, false);
   });
- 
+
   // ── Delete ────────────────────────────────────────────────────
- 
+
   test("DELETE /api/v1/companies/:id should return 403 for non-owner", async () => {
     const response = await request(app)
       .delete(`/api/v1/companies/${company._id}`)
       .set("Authorization", `Bearer ${otherRecruiterToken}`);
- 
+
     assert.strictEqual(response.status, 403);
     assert.strictEqual(response.body.success, false);
   });
- 
+
   test("DELETE /api/v1/companies/:id should delete company for owner", async () => {
     const response = await request(app)
       .delete(`/api/v1/companies/${company._id}`)
       .set("Authorization", `Bearer ${recruiterToken}`);
- 
+
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.body.success, true);
   });
- 
+
   test("GET /api/v1/companies/:id should return 404 after deletion", async () => {
     const response = await request(app)
       .get(`/api/v1/companies/${company._id}`);
- 
+
     assert.strictEqual(response.status, 404);
     assert.strictEqual(response.body.success, false);
   });
