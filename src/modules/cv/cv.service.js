@@ -4,7 +4,15 @@ import { uploadToCloudinary } from "../../utils/cloudinary.js";
 import Profile from "../../models/profile.model.js";
 import { GROQ_API_KEY } from "../../config/env.js";
  
-const groq = new Groq({ apiKey: GROQ_API_KEY });
+// Lazy initialization — only created when parseCV is actually called
+// Prevents CI crashes when GROQ_API_KEY is not set in test environment
+let groqClient;
+const getGroqClient = () => {
+  if (!groqClient) {
+    groqClient = new Groq({ apiKey: GROQ_API_KEY });
+  }
+  return groqClient;
+};
  
 // ── Upload CV to Cloudinary ─────────────────────────────────────
 export const uploadCV = async (userId, fileBuffer, mimetype) => {
@@ -80,7 +88,7 @@ The JSON must follow this exact structure:
 CV Text:
 ${rawText.slice(0, 8000)}`;
  
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroqClient().chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [{ role: "user", content: prompt }],
     max_tokens: 2000,
@@ -158,3 +166,4 @@ export const applyParsedCV = async (userId) => {
  
   return profile;
 };
+ 

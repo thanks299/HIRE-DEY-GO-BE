@@ -23,10 +23,14 @@ describe("Job Controller Unit", () => {
     const limitMock = mock.fn(async () => fakeJobs);
     const skipMock = mock.fn(() => ({ limit: limitMock }));
     const sortMock = mock.fn(() => ({ skip: skipMock }));
-    const populateMock = mock.fn(() => ({ sort: sortMock }));
-    const findMock = mock.method(Job, "find", () => ({ populate: populateMock }));
-
     const countMock = mock.method(Job, "countDocuments", async () => 11);
+
+    // second populate
+    const populate2Mock = mock.fn(() => ({ sort: sortMock }));
+
+    // first populate
+    const populate1Mock = mock.fn(() => ({ populate: populate2Mock }));
+    const findMock = mock.method(Job, "find", () => ({ populate: populate1Mock}));
 
     const req = { query: { page: "2", sort: "deadline", status: "active", type: "full_time" } };
     const res = makeRes();

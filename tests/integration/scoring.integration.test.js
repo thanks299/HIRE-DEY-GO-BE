@@ -96,7 +96,7 @@ describe("Scoring Endpoints Integration", () => {
       companyId: company._id,
       postedBy: recruiter._id,
       title: "Node Engineer",
-      description: "Build backend services",
+      description: "Build and maintain backend services using Node.js and MongoDB for production systems.",
       requiredSkills: ["Node.js", "MongoDB"],
       type: "FULL_TIME",
       status: "ACTIVE",
