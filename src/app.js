@@ -29,14 +29,7 @@ const allowedOrigins = new Set([
 ].filter(Boolean));
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow non-browser clients (Postman, server-to-server) with no origin
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.has(origin)) return callback(null, true);
-    // Log CORS rejections for debugging
-    console.warn(`CORS rejected origin: ${origin}`);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
+  origin: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   exposedHeaders: ["Content-Range", "X-Content-Range", "X-Total-Count"],
