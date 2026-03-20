@@ -186,7 +186,7 @@ assessmentRouter.post("/jobs/:jobId/assessments/:assessmentId", verifyToken, att
  *       400:
  *         description: Candidate already took this assessment
  */
-assessmentRouter.get("/jobs/:jobId/assessment",verifyToken, startAssessment);
+assessmentRouter.get("/jobs/:jobId/assessment",verifyToken, authorize("CANDIDATE"), startAssessment);
 
 /**
  * @swagger

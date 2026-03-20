@@ -43,39 +43,47 @@ export const generateOTP = () => {
 
 /* ---------------- REGISTER USER ---------------- */
 
-export const registerUser = async ({
-  firstName,
-  lastName,
-  email,
-  password,
-  role,
-}) => {
-
-  const existingUser = await User.findOne({ email });
-
-  if (existingUser) {
-    throw new ServiceError("Email already registered", 409);
-  }
-
-  const allowedRoles = ["CANDIDATE", "RECRUITER"];
-  const userRole = allowedRoles.includes(role) ? role : "CANDIDATE";
-
-  const otp = generateOTP();
-
-  const hashedOtp = crypto
-    .createHash("sha256")
-    .update(otp)
-    .digest("hex");
-
-  const newUser = new User({
+export const registerUser = async (data) => {
+  const {
     firstName,
     lastName,
     email,
     password,
+    role,
+    companyName,
+    companyAddress,
+    companySize,
+  } = data;
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new ServiceError("Email already registered", 409);
+  }
+
+  const userRole = ["CANDIDATE", "RECRUITER"].includes(role)
+    ? role
+    : "CANDIDATE";
+
+  const otp = generateOTP();
+  const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+
+  const newUser = new User({
+    email,
+    password,
     role: userRole,
+
+    // ✅ Candidate
+    firstName: userRole === "CANDIDATE" ? firstName : undefined,
+    lastName: userRole === "CANDIDATE" ? lastName : undefined,
+
+    // ✅ Recruiter
+    companyName: userRole === "RECRUITER" ? companyName : undefined,
+    companyAddress: userRole === "RECRUITER" ? companyAddress : undefined,
+    companySize: userRole === "RECRUITER" ? companySize : undefined,
+
     otp: hashedOtp,
     otpExpires: new Date(Date.now() + 10 * 60 * 1000),
-    otpAttempts: 0
+    otpAttempts: 0,
   });
 
   await newUser.save();
@@ -95,12 +103,10 @@ export const registerUser = async ({
       role: newUser.role,
       isVerified: newUser.isVerified,
     },
-    tokens: {
-      accessToken,
-      refreshToken,
-    },
+    tokens: { accessToken, refreshToken },
   };
 };
+
 
 /* ---------------- LOGIN USER ---------------- */
 

@@ -38,7 +38,7 @@ const sendEmail = async (payload) => {
 
     const { data, error } = await resend.emails.send({
       from: payload.from,
-      to: payload.to,
+      to: [payload.to],
       subject: payload.subject,
       html: payload.html,
     });

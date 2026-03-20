@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: [true, "First name is required"],
       trim: true,
       minlength: [2, "First name must be at least 2 characters"],
       maxlength: [50, "First name cannot exceed 50 characters"],
@@ -13,7 +12,6 @@ const userSchema = new mongoose.Schema(
 
     lastName: {
       type: String,
-      required: [true, "Last name is required"],
       trim: true,
       minlength: [2, "Last name must be at least 2 characters"],
       maxlength: [50, "Last name cannot exceed 50 characters"],
@@ -40,6 +38,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["CANDIDATE", "RECRUITER", "ADMIN"],
       default: "CANDIDATE",
+    },
+
+    // ✅ NEW: Recruiter Fields
+    companyName: {
+      type: String,
+      trim: true,
+    },
+
+    companyAddress: {
+      type: String,
+      trim: true,
+    },
+
+    companySize: {
+      type: String,
+      enum: ["1-10", "11-50", "51-200", "201-500", "500+"],
     },
 
     isVerified: {

@@ -92,7 +92,9 @@ export const createJob = async (req, res, next) => {
       ...req.body,
       companyId: req.body.companyId,
       postedBy: req.user.userId,
+      role: req.body.role?.toUpperCase() || "CANDIDATE",
       type: req.body.type?.toUpperCase() || "FULL_TIME",
+      currency: req.body.currency?.toUpperCase() || "NGN",
       status: req.body.status?.toUpperCase() || "ACTIVE",
     });
 
@@ -135,9 +137,17 @@ export const updateJob = async (req, res, next) => {
             throw error;
         }
 
-        Object.assign(job, req.body);
+        Object.assign(job, {
+          ...req.body,
+          companyId: req.body.companyId,
+          postedBy: req.user.userId,
+          role: req.body.role?.toUpperCase() || "CANDIDATE",
+          type: req.body.type?.toUpperCase() || "FULL_TIME",
+          currency: req.body.currency?.toUpperCase() || "NGN",
+          status: req.body.status?.toUpperCase() || "ACTIVE",
+        });
 
-        await job.save()
+        await job.save();
 
         res.status(200).json({ success: true, message:"Job posting updated successfully", job })
         
@@ -168,6 +178,8 @@ export const deleteJob = async (req, res, next) => {
 export const closeJobPosting = async (req, res, next) => {
   try {
     const { id } = req.params;
+    console.log("Closing job posting with ID:", id);
+    console.log(req.params)
 
     const job = await Job.findById(id);
 
