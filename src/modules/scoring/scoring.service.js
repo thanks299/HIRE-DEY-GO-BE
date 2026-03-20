@@ -27,13 +27,13 @@ const canRecruiterAccessJob = (user, job) => {
  
 /**
  * Check if a candidate submitted within the allowed time limit.
- * Uses createdAt (started) vs completedAt (submitted) on the result.
+ * Uses startedAt (started) vs completedAt (submitted) on the result.
  * Includes a 10-second grace period for network latency.
  */
 const submittedOnTime = (result, timeLimitMinutes) => {
-  if (!result?.completedAt || !result?.createdAt) return false;
+  if (!result?.completedAt || !result?.startedAt) return false;
  
-  const timeTakenMs = new Date(result.completedAt) - new Date(result.createdAt);
+  const timeTakenMs = new Date(result.completedAt) - new Date(result.startedAt);
   const timeLimitMs = timeLimitMinutes * 60 * 1000;
  
   return timeTakenMs <= timeLimitMs + 10_000;
