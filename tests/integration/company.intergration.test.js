@@ -90,11 +90,23 @@ describe("Company Endpoints Integration", () => {
       .set("Authorization", `Bearer ${recruiterToken}`)
       .send({
         name: `Test Company ${suffix}`,
-        description: "A test company",
+        about: "A leading technology company building innovative solutions",
+        description: "A leading technology company building innovative solutions for modern businesses.",
         industry: "Technology",
-        size: "11-50",
+        teamSize: "11-50",
+        organizationType: "STARTUP",
+        yearEstablished: 2015,
         location: "Lagos, Nigeria",
+        country: "Nigeria",
+        city: "Lagos",
+        address: "123 Victoria Island, Lagos",
         website: "https://testcompany.com",
+        workEmail: "hello@testcompany.com",
+        phone: "+2348012345678",
+        socialLinks: {
+          linkedin: "https://linkedin.com/company/testcompany",
+          twitter: "https://twitter.com/testcompany",
+        },
       });
  
     assert.strictEqual(response.status, 201);
@@ -189,12 +201,17 @@ describe("Company Endpoints Integration", () => {
     const response = await request(app)
       .patch(`/api/v1/companies/${company._id}`)
       .set("Authorization", `Bearer ${recruiterToken}`)
-      .send({ description: "Updated description", size: "51-200" });
+      .send({
+        description: "Updated description",
+        teamSize: "51-200",
+        address: "456 Lekki Phase 1, Lagos",
+        workEmail: "updated@testcompany.com",
+      });
  
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.body.success, true);
     assert.strictEqual(response.body.data.description, "Updated description");
-    assert.strictEqual(response.body.data.size, "51-200");
+    assert.strictEqual(response.body.data.teamSize, "51-200");
   });
  
   test("PATCH /api/v1/companies/:id should return 403 for non-owner recruiter", async () => {
@@ -220,12 +237,11 @@ describe("Company Endpoints Integration", () => {
   // ── Jobs by company ───────────────────────────────────────────
  
   test("GET /api/v1/companies/:id/jobs should return jobs for a company", async () => {
-    // Create a job linked to this company
     await Job.create({
       companyId: company._id,
       postedBy: recruiter._id,
       title: "Test Job",
-      description: "Job description",
+      description: "This is a test job description that meets the minimum length requirement for testing.",
       type: "FULL_TIME",
       status: "ACTIVE",
     });
@@ -238,43 +254,44 @@ describe("Company Endpoints Integration", () => {
     assert.ok(Array.isArray(response.body.jobs));
     assert.ok(response.body.jobs.length >= 1);
   });
- 
+
   test("GET /api/v1/companies/:id/jobs should return 404 for non-existent company", async () => {
     const fakeId = new mongoose.Types.ObjectId().toString();
     const response = await request(app)
       .get(`/api/v1/companies/${fakeId}/jobs`);
- 
+
     assert.strictEqual(response.status, 404);
     assert.strictEqual(response.body.success, false);
   });
- 
+
   // ── Delete ────────────────────────────────────────────────────
- 
+
   test("DELETE /api/v1/companies/:id should return 403 for non-owner", async () => {
     const response = await request(app)
       .delete(`/api/v1/companies/${company._id}`)
       .set("Authorization", `Bearer ${otherRecruiterToken}`);
- 
+
     assert.strictEqual(response.status, 403);
     assert.strictEqual(response.body.success, false);
   });
- 
+
   test("DELETE /api/v1/companies/:id should delete company for owner", async () => {
     const response = await request(app)
       .delete(`/api/v1/companies/${company._id}`)
       .set("Authorization", `Bearer ${recruiterToken}`);
- 
+
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.body.success, true);
   });
- 
+
   test("GET /api/v1/companies/:id should return 404 after deletion", async () => {
     const response = await request(app)
       .get(`/api/v1/companies/${company._id}`);
- 
+
     assert.strictEqual(response.status, 404);
     assert.strictEqual(response.body.success, false);
   });
 });
  
 setTimeout(() => process.exit(0), 2000).unref();
+ 

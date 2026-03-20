@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import { FRONTEND_URL, CLIENT_URL } from "./config/env.js";
 import swaggerUi from "swagger-ui-express";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import authRoute from "./modules/auth/auth.routes.js";
@@ -19,24 +18,14 @@ import cvRoutes from "./modules/cv/cv.routes.js";
 
 const app = express();
 
-const allowedOrigins = [
-  FRONTEND_URL,
-  CLIENT_URL,
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  "http://localhost:5000",
-  "http://127.0.0.1:5000",
-].filter(Boolean);
-
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow non-browser clients (Postman, server-to-server) with no origin
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
+  origin: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  exposedHeaders: ["Content-Range", "X-Content-Range", "X-Total-Count"],
   credentials: true,
+  maxAge: 86400,
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));

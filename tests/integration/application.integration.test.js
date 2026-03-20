@@ -59,7 +59,7 @@ describe("Application Endpoints Integration", () => {
       companyId: new mongoose.Types.ObjectId(),
       postedBy: recruiter._id,
       title: "Backend Engineer",
-      description: "Build APIs",
+      description: "Build and maintain scalable REST APIs using Node.js and MongoDB for production systems.",
       requiredSkills: ["Node.js", "MongoDB"],
       type: "FULL_TIME",
       status: "ACTIVE",
